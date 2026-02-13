@@ -6,3 +6,8 @@ export interface Admin_shop{
   shop_name  :string
   shop_type   :string 
 }
+
+export interface AdminLogin_Data{
+email  :string      
+  password  :string
+}

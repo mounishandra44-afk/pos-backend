@@ -6,10 +6,13 @@
 // import bcrypt from "bcrypt";
 // import { Login } from "./types/LoginData";
 // import jwt from 'jsonwebtoken';
+// import router from "../src/controllers/LoginRoute"
 // const app=express();
 // const prismaClient=new PrismaClient();
 
 // app.use(express.json())
+
+// app.use("/user",router)
 
 // const secret="my name is mounish";
 // async function saveData(){
@@ -159,6 +162,13 @@
 //    })
 //    res.status(200).send(parsedData);
 // } )
+import express, { Request, Response } from "express";
+import router from "../src/controllers/LoginRoute"
+const app=express();
 
 
-// app.listen(8000,()=>console.log("the app is started 8000"))
+app.use(express.json())
+
+app.use("/user",router)
+
+app.listen(8000,()=>console.log("the app is started 8000"))

@@ -1,0 +1,14 @@
+export const DATAMISSING:string="This Field Expecting Data!";
+export const USERNAME_MIN_MAX:string="UserName name must be between 3 and 50 characters"
+export const NOT_VALID_PHONE:string="Phone must contain only digits";
+export const EMAIL_MUST_CONTAIN:string="Email must contain @";
+export const NOT_VALID_EMAIL:string="Email is not allowed"
+export const PASSWORD_MUST_BE_IN_RANGE:string="Password length must be in the range of 8 and 50";
+export const PASSWORD_MUST_SPECAIL:string="Password must contains the special character";
+export const PASSWORD_MUST_NUMBER:string="Password must contains at least one number";
+export const PASSWORD_MUST_ALPHABET:string="Password must contains at least one alphabet";
+export const EMAIL_ALREADY_EXSITS:string="Email is already exsists";
+export const SHOP_ADMIN_CREATED:string="Admin Created successfully";
+export const INVALID_CREDENTIALS:string="What ever the details passed by user or invalid or not Found";
+
+export const LOGIN_SUCCESSFULL:string="User Logged Successful";
