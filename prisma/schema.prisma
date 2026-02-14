@@ -84,7 +84,8 @@ model Shop_Owner {
   transaction  Transaction[]
 
   gst_enabled  Boolean  @default(false)
-
+  gst_percentage Int @default(0)
+  welcomeMessage String @default("Thanks for visiting! Vist Again")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

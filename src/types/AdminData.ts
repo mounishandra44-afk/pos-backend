@@ -9,5 +9,14 @@ export interface Admin_shop{
 
 export interface AdminLogin_Data{
 email  :string      
-  password  :string
+  password?  :string
+}
+
+export interface NewPasswordData{
+  email:string
+   password  :string      
+}
+export interface UserData{
+shop_id:string
+admin_email:string
 }

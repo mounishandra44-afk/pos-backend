@@ -12,3 +12,9 @@ export const SHOP_ADMIN_CREATED:string="Admin Created successfully";
 export const INVALID_CREDENTIALS:string="What ever the details passed by user or invalid or not Found";
 
 export const LOGIN_SUCCESSFULL:string="User Logged Successful";
+export const EMAIL_NOT_FOUND:string="Email don't found";
+export const EMAIL_FOUND:string="Email Found";
+export const INTERNAL_SERVER_ERROR:string="Internal Error existsin the system";
+export const PASSWORD_SAVED:string="New Password is updated";
+export const DATA_NOT_SAVED:string="New Data is not updated";
+export const DATA_UPDATED:string="New data is updated";
