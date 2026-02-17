@@ -95,6 +95,7 @@ router.get("/forgetPassword",forgetEmailVali,validateAdminData,async(req:Request
 router.put("/updateTheNewPassword",validateemailAndPass,validateAdminData,async(req:Request<{},{},NewPasswordData>,res:Response)=>{
     try {
      const data=await saveThePassword(req.body);
+     
     if(data===PASSWORD_SAVED){
           return res.status(200).json({
              isError:false,

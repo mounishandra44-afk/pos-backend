@@ -164,11 +164,13 @@
 // } )
 import express, { Request, Response } from "express";
 import router from "../src/controllers/LoginRoute"
+
+import myProduct from "./controllers/ProductRoute";
 const app=express();
 
 
 app.use(express.json())
 
 app.use("/user",router)
-
+app.use("/product",myProduct)
 app.listen(8000,()=>console.log("the app is started 8000"))

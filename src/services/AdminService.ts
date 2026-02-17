@@ -35,10 +35,11 @@ export  async function checkAdminCredentials(reqQuires:any){
 const data = await prisma.shop_Owner.findFirst({
     where: { email: reqQuires.email }
   });
-
+// console.log(data)
   if(data){
     const isMatched=await bcrypt.compare(reqQuires.password,data.password)
     if(isMatched){
+      // console.log("data matched");
 const token=await jwt.sign(data,process.env.JWT_SECRET_KEY as string,{expiresIn:3*24*60*60})
         return token;
     }
@@ -93,7 +94,7 @@ export async function saveThePassword(params:any) {
 
 export async function updateAdminData(reqBody:any,shopDetails:any):Promise<String> {
   try {
-    console.log(shopDetails);
+    // console.log(shopDetails);
   const data=  await prisma.shop_Owner.update({
       where:{id:shopDetails.shop_id},
       data:{

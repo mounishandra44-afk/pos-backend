@@ -4,6 +4,7 @@ import { DATAMISSING, EMAIL_MUST_CONTAIN, INTERNAL_SERVER_ERROR, NOT_VALID_EMAIL
 import { NextFunction, Request, Response } from 'express';
 import { ValidationResponseObject } from "../types/ResponseObject";
 import { Admin_shop, AdminLogin_Data, NewPasswordData } from "../types/AdminData";
+import { Product } from "../types/ProductData";
 
 const validEmail=["gmail.com","outlook.com","yahoo.com","hotmail.com"]
 export let allData=[
@@ -186,8 +187,38 @@ body("gst_percentage")
 .isInt({min:0,max:50}).withMessage("GST will be in the range of 0 to 50")   
 ]
 
+export let productData=[
+  body("price")
+  .notEmpty().withMessage("This can't be Empty").bail()
+  .isFloat({min:0,max:100000}).withMessage("Product price will be in the range 0 to 100000")
+]
+
 
 export const validateAdminData=  (req:Request<{},{},Admin_shop>,res:Response,next:NextFunction)=>{
+
+  try {
+     const error= validationResult(req );
+    if(!error.isEmpty()){
+       const validationErrors= error.array().map(err=>({
+            field:err.type,
+            message:err.msg
+        }))
+ return  res.status(400).json( new ValidationResponseObject(true,"fail",validationErrors))
+
+    }
+    next();
+
+  } catch (error) {
+    return  res.status(500).json( {
+      isError:true,
+      message:INTERNAL_SERVER_ERROR
+    })
+  }
+    
+   
+}
+
+export const validateProductData=  (req:Request<{},{},Product>,res:Response,next:NextFunction)=>{
 
   try {
      const error= validationResult(req );
