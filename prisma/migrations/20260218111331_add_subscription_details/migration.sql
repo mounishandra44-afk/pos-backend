@@ -8,6 +8,8 @@ CREATE TABLE "Shop_Owner" (
     "shop_name" TEXT NOT NULL,
     "shop_type" TEXT NOT NULL,
     "gst_enabled" BOOLEAN NOT NULL DEFAULT false,
+    "gst_percentage" INTEGER NOT NULL DEFAULT 0,
+    "welcomeMessage" TEXT NOT NULL DEFAULT 'Thanks for visiting! Vist Again',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -54,6 +56,18 @@ CREATE TABLE "TransactionItem" (
     CONSTRAINT "TransactionItem_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "SubscriptionDetails" (
+    "id" UUID NOT NULL,
+    "shopId" UUID NOT NULL,
+    "subscriptionStartsAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "subscriptionEndsAt" TIMESTAMP(3) NOT NULL,
+    "subscriptionStatus" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "SubscriptionDetails_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Shop_Owner_phone_key" ON "Shop_Owner"("phone");
 
@@ -71,3 +85,6 @@ ALTER TABLE "TransactionItem" ADD CONSTRAINT "TransactionItem_transactionId_fkey
 
 -- AddForeignKey
 ALTER TABLE "TransactionItem" ADD CONSTRAINT "TransactionItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SubscriptionDetails" ADD CONSTRAINT "SubscriptionDetails_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "Shop_Owner"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

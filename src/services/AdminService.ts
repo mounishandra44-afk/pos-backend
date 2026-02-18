@@ -8,7 +8,8 @@ import { hashingPassword } from "../commonfunctionalities/hasshingPassword";
 dotenv.config();
 export async function registerAdmin(reqBody: any): Promise<boolean> {
 
-  const data = await prisma.shop_Owner.findFirst({
+ try {
+   const data = await prisma.shop_Owner.findFirst({
     where: { email: reqBody.email }
   });
 
@@ -17,7 +18,7 @@ export async function registerAdmin(reqBody: any): Promise<boolean> {
     return true;
   }
 const hashedPass=await hashingPassword(reqBody.password)
-  await prisma.shop_Owner.create({
+ const adminData= await prisma.shop_Owner.create({
     data: {
       userName: reqBody.userName,
       phone: reqBody.phone,
@@ -27,13 +28,35 @@ const hashedPass=await hashingPassword(reqBody.password)
       shop_type: reqBody.shop_type
     }
   });
+const startDate = new Date(adminData.createdAt);
+const expiryDate = new Date(startDate);
+expiryDate.setMonth(expiryDate.getMonth() + 3);
+ await prisma.subscriptionDetails.create({
+    data: {
+      shopId:adminData.id,
+      subscriptionStartsAt:startDate,
+      subscriptionEndsAt:expiryDate,
+      subscriptionStatus:true
+
+    }
+  })
 
   return false;
+ } catch (error) {
+  return true
+ }
 }
 
 export  async function checkAdminCredentials(reqQuires:any){
-const data = await prisma.shop_Owner.findFirst({
-    where: { email: reqQuires.email }
+try {
+  const data = await prisma.shop_Owner.findFirst({
+    where: { 
+      email: reqQuires.email 
+
+    },
+    include:{
+      subscriptionDetails:true
+    }
   });
 // console.log(data)
   if(data){
@@ -41,6 +64,7 @@ const data = await prisma.shop_Owner.findFirst({
     if(isMatched){
       // console.log("data matched");
 const token=await jwt.sign(data,process.env.JWT_SECRET_KEY as string,{expiresIn:3*24*60*60})
+
         return token;
     }
     else{
@@ -48,6 +72,9 @@ const token=await jwt.sign(data,process.env.JWT_SECRET_KEY as string,{expiresIn:
     }
   }
   return "";
+} catch (error) {
+  
+}
 }
 
 export async function isEmailExsits(reqQuery:any):Promise<string> {

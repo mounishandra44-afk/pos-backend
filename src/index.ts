@@ -5,6 +5,7 @@ import myProduct from "./controllers/ProductRoute";
 import transactionRouter from "./controllers/transationRoute";
 import report from "./controllers/ReportRoute";
 import cors from "cors";
+import "./cron/checkingSubscriptionStatus.cron";
 
 const app=express();
 app.use(

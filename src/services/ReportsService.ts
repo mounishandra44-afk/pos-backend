@@ -43,3 +43,67 @@ return {
     };
   }  
  }
+
+ export const getOverViewData=async (shopDetails:any) => {
+    try {
+        // console.log("hi this from the getOverViewData")
+     const overAllData= await prisma.transaction.aggregate({
+             where: {
+             shopId:shopDetails.shop_id
+             },
+             _avg:{
+                totalAmount:true
+             },
+             _count:{
+                id:true
+             },
+             _sum:{
+                totalAmount:true
+             }
+        })
+
+        // console.log(overAllData)
+
+     const result = await prisma.$queryRaw<{ hour: number; total: bigint }[]>`
+  SELECT 
+    CAST(EXTRACT(HOUR FROM "createdAt") AS INTEGER) AS hour,
+    COUNT(*) AS total
+  FROM "Transaction"
+  WHERE "shopId" = ${shopDetails.shop_id}::uuid
+  GROUP BY hour
+  ORDER BY total DESC
+  LIMIT 1;
+`;
+// console.log(result)
+
+const busiestHourData = result?.[0];
+
+const response = {
+  totalTransactions: overAllData._count?.id ?? 0,
+
+  totalRevenue: Number(overAllData._sum?.totalAmount ?? 0),
+
+  averageTransaction: Number(overAllData._avg?.totalAmount ?? 0),
+
+  busiestHour: busiestHourData
+    ? {
+        hour: Number(busiestHourData.hour),
+        transactions: Number(busiestHourData.total)
+      }
+    : null
+};
+console.log(response)
+ return {
+      isErr: false,
+      statusCode: 200,
+      messages: response
+    };
+
+    } catch (error) {
+        return {
+      isErr: true,
+      statusCode: 500,
+      messages: " Shop Details fetching is Failed"
+    };
+    }
+ }

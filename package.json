@@ -24,6 +24,7 @@
     "fast-csv": "^5.0.5",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
     "prisma": "^6.19.2"
   },
   "devDependencies": {
