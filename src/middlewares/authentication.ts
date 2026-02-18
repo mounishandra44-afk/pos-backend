@@ -4,7 +4,7 @@ import { UserData } from "../types/AdminData";
 import { AuthRequest } from "../types/customRequest";
 export const authenticate = (req: Request,res: Response,next: NextFunction) => {
   const authHeader = req.headers.authorization;
-
+console.log("this is from the authentication middelware")
   if (!authHeader) {
     return res.status(401).json({ message: "Token missing" });
   }
