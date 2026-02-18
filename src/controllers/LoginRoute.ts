@@ -5,6 +5,7 @@ import { DATA_NOT_SAVED, DATA_UPDATED, EMAIL_ALREADY_EXSITS, EMAIL_FOUND, EMAIL_
 import { Admin_shop, AdminLogin_Data, NewPasswordData } from "../types/AdminData";
 import { authenticate } from "../middlewares/authentication";
 import { AuthRequest } from "../types/customRequest";
+import { loginLimiter } from "../middlewares/RateLimiting";
 const router=express.Router();
 router.post("/adminRegister",allData,validateAdminData,async(req:Request<{},{},Admin_shop>,res:Response)=>{
 try {
@@ -34,7 +35,7 @@ try {
 
 })
 
-router.get("/login",loginDataVali,validateAdminData,async (req:Request<{},{},AdminLogin_Data>,res:Response)=>{
+router.get("/login",loginLimiter,loginDataVali,validateAdminData,async (req:Request<{},{},AdminLogin_Data>,res:Response)=>{
    try {
      const validCredentials= await checkAdminCredentials(req.query);
     if(!validCredentials){
@@ -161,5 +162,14 @@ router.put("/updateUser",authenticate,updatedData,validateAdminData,async(req:Re
     }
    
 })
+
+router.post("/logout", (req:Request, res:Response) => {
+    try {
+        return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+         return res.status(500).json({ message: "Internal Server Error unable To Logout" });
+    }
+
+});
 
 export default router;

@@ -5,6 +5,7 @@ import { NextFunction, Request, Response } from 'express';
 import { ValidationResponseObject } from "../types/ResponseObject";
 import { Admin_shop, AdminLogin_Data, NewPasswordData } from "../types/AdminData";
 import { Product } from "../types/ProductData";
+import { Dates } from "../types/FromDateToDate";
 
 const validEmail=["gmail.com","outlook.com","yahoo.com","hotmail.com"]
 export let allData=[
@@ -194,6 +195,31 @@ export let productData=[
 ]
 
 
+
+export const validateDateRange = [
+  query("fromDate")
+    .notEmpty().withMessage("From date is required").bail()
+    .isISO8601().withMessage("From date must be valid ISO format").bail()
+    .toDate(),
+
+  query("toDate")
+    .notEmpty().withMessage("To date is required").bail()
+    .isISO8601().withMessage("To date must be valid ISO format").bail()
+    .toDate(),
+
+  query("toDate").custom((value, { req }) => {
+    const from = new Date(req.query?.fromDate as string);
+    const to = new Date(value);
+
+    if (from > to) {
+      throw new Error("From date cannot be greater than To date");
+    }
+
+    return true;
+  })
+];
+
+
 export const validateAdminData=  (req:Request<{},{},Admin_shop>,res:Response,next:NextFunction)=>{
 
   try {
@@ -222,6 +248,30 @@ export const validateProductData=  (req:Request<{},{},Product>,res:Response,next
 
   try {
      const error= validationResult(req );
+    if(!error.isEmpty()){
+       const validationErrors= error.array().map(err=>({
+            field:err.type,
+            message:err.msg
+        }))
+ return  res.status(400).json( new ValidationResponseObject(true,"fail",validationErrors))
+
+    }
+    next();
+
+  } catch (error) {
+    return  res.status(500).json( {
+      isError:true,
+      message:INTERNAL_SERVER_ERROR
+    })
+  }
+    
+   
+}
+
+export const validateDates=  (req:Request,res:Response,next:NextFunction)=>{
+
+  try {
+     const error= validationResult(req);
     if(!error.isEmpty()){
        const validationErrors= error.array().map(err=>({
             field:err.type,
