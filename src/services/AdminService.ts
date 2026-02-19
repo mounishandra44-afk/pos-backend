@@ -5,117 +5,171 @@ import jwt from "jsonwebtoken"
 import dotenv from "dotenv";
 import { DATA_NOT_SAVED, DATA_UPDATED, EMAIL_FOUND, EMAIL_NOT_FOUND, INTERNAL_SERVER_ERROR, PASSWORD_SAVED } from "../constData/ErrorMessages";
 import { hashingPassword } from "../commonfunctionalities/hasshingPassword";
+import { AdminLogin_Data } from "../types/AdminData";
+import { sendResetEmail } from "../utils/sendEmail";
 dotenv.config();
-export async function registerAdmin(reqBody: any): Promise<boolean> {
 
- try {
-   const data = await prisma.shop_Owner.findFirst({
-    where: { email: reqBody.email }
-  });
+type RegisterAdminResult =
+  | { success: true; data: any }
+  | { success: false; reason: "EMAIL_EXISTS Or PHONE_EXISTS" | "SERVER_ERROR" };
+
+export async function registerAdmin(
+  reqBody: any
+): Promise<RegisterAdminResult> {
+  try {
+    // console.log(reqBody);
+    const existingUser = await prisma.shop_Owner.findFirst({
+       where:{
+        OR:[
+          { email: reqBody.email },
+            { phone: reqBody.phone }
+        ]
+       }
+    });
+
+    if (existingUser) {
+      return { success: false, reason: "EMAIL_EXISTS Or PHONE_EXISTS" };
+    }
+
+    const hashedPass = await hashingPassword(reqBody.password);
+
+    const adminData = await prisma.shop_Owner.create({
+      data: {
+        userName: reqBody.userName,
+        phone: reqBody.phone,
+        email: reqBody.email,
+        password: hashedPass,
+        shop_name: reqBody.shop_name,
+        shop_type: reqBody.shop_type
+      }
+    });
+
+    console.log(adminData);
+    return { success: true, data: adminData };
+
+  } catch (error) {
+    return { success: false, reason: "SERVER_ERROR" };
+  }
+}
+
+
+export async function checkAdminCredentials(loginData: AdminLogin_Data) {
+  try {
+    console.log(loginData)
+    const user = await prisma.shop_Owner.findFirst({
+      where: { email: loginData.email },
+      // include: { subscriptionDetails: true }
+    });
+   console.log(user)
+    if (!user) return null;
+
+    const isMatched = await bcrypt.compare(
+      loginData.password,
+      user.password
+    );
+    console.log(isMatched)
+
+    if (!isMatched) return null;
+
+    const accessToken = jwt.sign(
+      {
+        id: user.id,
+        userName: user.userName,
+        email: user.email,
+        shop_type: user.shop_type
+      },
+      process.env.JWT_ACCESS_SECRET!,
+      { expiresIn: "15m" }
+    );
+
+    
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.JWT_REFRESH_SECRET!,
+      { expiresIn: "7d" }
+    );
 
   
-  if (data) {
-    return true;
-  }
-const hashedPass=await hashingPassword(reqBody.password)
- const adminData= await prisma.shop_Owner.create({
-    data: {
-      userName: reqBody.userName,
-      phone: reqBody.phone,
-      email: reqBody.email,
-      password: hashedPass,
-      shop_name: reqBody.shop_name,
-      shop_type: reqBody.shop_type
-    }
-  });
-const startDate = new Date(adminData.createdAt);
-const expiryDate = new Date(startDate);
-expiryDate.setMonth(expiryDate.getMonth() + 3);
- await prisma.subscriptionDetails.create({
-    data: {
-      shopId:adminData.id,
-      subscriptionStartsAt:startDate,
-      subscriptionEndsAt:expiryDate,
-      subscriptionStatus:true
+    await prisma.shop_Owner.update({
+      where: { id: user.id },
+      data: { refreshToken }
+    });
 
-    }
-  })
+    return {
+      accessToken,
+      refreshToken,
+      shop: {
+        id: user.id,
+        userName: user.userName,
+        email: user.email,
+        shop_type: user.shop_type
+      }
+    };
 
-  return false;
- } catch (error) {
-  return true
- }
-}
-
-export  async function checkAdminCredentials(reqQuires:any){
-try {
-  const data = await prisma.shop_Owner.findFirst({
-    where: { 
-      email: reqQuires.email 
-
-    },
-    include:{
-      subscriptionDetails:true
-    }
-  });
-// console.log(data)
-  if(data){
-    const isMatched=await bcrypt.compare(reqQuires.password,data.password)
-    if(isMatched){
-      // console.log("data matched");
-const token=await jwt.sign(data,process.env.JWT_SECRET_KEY as string,{expiresIn:3*24*60*60})
-
-        return token;
-    }
-    else{
-        return "";
-    }
-  }
-  return "";
-} catch (error) {
-  
-}
-}
-
-export async function isEmailExsits(reqQuery:any):Promise<string> {
-  try {
-    const data=await prisma.shop_Owner.findFirst({
-    where:{
-      email:reqQuery.email
-    }
-  })
-  if(!data){
-    return EMAIL_NOT_FOUND
-  }
-  return EMAIL_FOUND
   } catch (error) {
-    return INTERNAL_SERVER_ERROR;
+    // console.error("Login Error:", error);
+    return null;
   }
- 
 }
 
-export async function saveThePassword(params:any) {
+
+export async function handleForgotPassword(email: string): Promise<{
+  success: boolean;
+  reason?: string;
+}> {
   try {
-    const data=await prisma.shop_Owner.findFirst({
-    where:{
-      email:params.email
+    const user = await prisma.shop_Owner.findUnique({
+      where: { email }
+    });
+
+    // Do NOT reveal whether user exists
+    if (!user) {
+      return { success: true }; 
     }
-  })
-  if(!data){
-    return EMAIL_NOT_FOUND
-  }
-  const pass=await hashingPassword(params.password)
-  await prisma.shop_Owner.update({
-    where:{
-      email:params.email
-    },
-    data:{
-      password:pass
-    }
-  })
-  return PASSWORD_SAVED
+
+    const resetToken = jwt.sign(
+      { id: user.id },
+      process.env.JWT_RESET_SECRET as string,
+      { expiresIn: "15m" }
+    );
+// console.log(resetToken)
+    const resetLink = `https://quickledger-bill.netlify.app/forget-email?token=${resetToken}`;
+
+
+    await sendResetEmail(email, resetLink);
+
+    return { success: true };
+
   } catch (error) {
-    return INTERNAL_SERVER_ERROR;
+    return {
+      success: false,
+      reason: "INTERNAL_ERROR"
+    };
+  }
+}
+
+
+export async function saveThePassword(params: {
+  token: string;
+  password: string;
+}): Promise<{ success: boolean; reason?: string }> {
+  try {
+    const decoded = jwt.verify(
+      params.token,
+      process.env.JWT_RESET_SECRET as string
+    ) as { id: string };
+
+    const hashedPassword = await hashingPassword(params.password);
+
+    await prisma.shop_Owner.update({
+      where: { id: decoded.id },
+      data: { password: hashedPassword }
+    });
+
+    return { success: true };
+
+  } catch (error) {
+    return { success: false, reason: "INVALID_OR_EXPIRED_TOKEN" };
   }
 }
 

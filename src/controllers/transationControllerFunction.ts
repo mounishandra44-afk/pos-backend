@@ -2,16 +2,52 @@ import express, { Request, Response } from "express";
 import { Transaction } from "../types/TransactionData";
 import { saveTransactionSer } from "../services/transactionservice";
 
-export const saveTransactionCon=async (req:Request<{},{},Transaction>,res:Response) => {
-    try {
-        const transaction= await saveTransactionSer(req.body,req.shop_Details);
-        let obj={
-            isError:transaction.isErr,
-            data:transaction.messages
-        }
-        return res.status(transaction.statusCode).json(obj)
-    } catch (error) {
-         return {statusCode:500,messages:error,isErr:true};
+
+
+const DB_STORE_SHOP_TYPES = [
+  "furniture",
+  "electronics",
+  "automobiles",
+  "supermarket"
+];
+
+export const saveTransactionCon = async (
+  req: Request<{}, {}, any[]>,
+  res: Response
+) => {
+  try {
+
+    if (!req.shop_Details) {
+      return res.status(401).json({
+        isError: true,
+        data: "Unauthorized"
+      });
     }
-   
-}
+
+    const shopType = req.shop_Details.shop_type.toLowerCase();
+
+    if (!DB_STORE_SHOP_TYPES.includes(shopType)) {
+      return res.status(200).json({
+        isError: false,
+        data: "IndexedDB mode enabled"
+      });
+    }
+
+    const transaction = await saveTransactionSer(
+      req.body,
+      req.shop_Details
+    );
+
+    return res.status(transaction.statusCode).json({
+      isError: transaction.isErr,
+      data: transaction.messages
+    });
+
+  } catch (error) {
+    console.error("Controller Error:", error);
+    return res.status(500).json({
+      isError: true,
+      data: "Internal server error"
+    });
+  }
+};

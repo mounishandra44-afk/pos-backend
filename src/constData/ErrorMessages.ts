@@ -7,14 +7,14 @@ export const PASSWORD_MUST_BE_IN_RANGE:string="Password length must be in the ra
 export const PASSWORD_MUST_SPECAIL:string="Password must contains the special character";
 export const PASSWORD_MUST_NUMBER:string="Password must contains at least one number";
 export const PASSWORD_MUST_ALPHABET:string="Password must contains at least one alphabet";
-export const EMAIL_ALREADY_EXSITS:string="Email is already exsists";
+export const EMAIL_ALREADY_EXSITS:string="Email is already exsists or Phone already exists";
 export const SHOP_ADMIN_CREATED:string="Admin Created successfully";
 export const INVALID_CREDENTIALS:string="What ever the details passed by user or invalid or not Found";
 
 export const LOGIN_SUCCESSFULL:string="User Logged Successful";
 export const EMAIL_NOT_FOUND:string="Email don't found";
 export const EMAIL_FOUND:string="Email Found";
-export const INTERNAL_SERVER_ERROR:string="Internal Error existsin the system";
+export const INTERNAL_SERVER_ERROR:string="Internal Error exists in the system";
 export const PASSWORD_SAVED:string="New Password is updated";
 export const DATA_NOT_SAVED:string="New Data is not updated";
 export const DATA_UPDATED:string="New data is updated";

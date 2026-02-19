@@ -55,7 +55,7 @@ body("password")
 
 
 export let loginDataVali=[
-     query("email")
+     body("email")
     .trim()
     .notEmpty().withMessage(DATAMISSING).bail()
     .custom((val) => {
@@ -69,7 +69,7 @@ export let loginDataVali=[
   return true;
 })
 ,
-query("password")
+body("password")
 .trim()
 .notEmpty().withMessage(DATAMISSING).bail()
 .isLength({ min: 8, max: 50 }).withMessage(PASSWORD_MUST_BE_IN_RANGE).bail()
@@ -90,7 +90,7 @@ query("password")
 ]
 
 export let forgetEmailVali=[
-     query("email")
+     body("email")
     .trim()
     .notEmpty().withMessage(DATAMISSING).bail()
     .custom((val) => {
@@ -189,9 +189,16 @@ body("gst_percentage")
 ]
 
 export let productData=[
+  body("name")
+  .notEmpty().withMessage("name can't be Empty")
+  ,
+  body("category")
+  .notEmpty().withMessage("category can't be Empty")
+  ,
+
   body("price")
   .notEmpty().withMessage("This can't be Empty").bail()
-  .isFloat({min:0,max:100000}).withMessage("Product price will be in the range 0 to 100000")
+  .isFloat({min:1,max:100000}).withMessage("Product price will be in the range 0 to 100000")
 ]
 
 

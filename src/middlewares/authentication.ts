@@ -14,12 +14,13 @@ export const authenticate = (req: Request,res: Response,next: NextFunction) => {
   try {
     const decoded = jwt.verify(
       token as string,
-      process.env.JWT_SECRET_KEY as string 
+      process.env.JWT_ACCESS_SECRET as string 
     ) as jwt.JwtPayload
 req.shop_Details={
 shop_id:decoded.id as string,
 shop_owner:decoded.userName as string,
-shop_email:decoded.email as string
+shop_email:decoded.email as string,
+shop_type:decoded.shop_type as string
 }
   
     next();

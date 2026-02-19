@@ -9,7 +9,7 @@ export interface Admin_shop{
 
 export interface AdminLogin_Data{
 email  :string      
-  password?  :string
+  password  :string
 }
 
 export interface NewPasswordData{

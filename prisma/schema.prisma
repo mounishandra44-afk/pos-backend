@@ -79,7 +79,7 @@ model Shop_Owner {
   password     String
   shop_name    String
   shop_type    String
-
+ refreshToken String? 
   products     Product[]
   transaction  Transaction[]
 
