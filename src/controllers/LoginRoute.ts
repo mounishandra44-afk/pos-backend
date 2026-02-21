@@ -165,7 +165,7 @@ router.put(
   async (req: Request, res: Response) => {
     try {
       const result = await saveThePassword(req.body);
-
+      console.log(req.body)
       if (!result.success) {
         return res.status(400).json({
           isError: true,
@@ -188,39 +188,42 @@ router.put(
 );
 
 
-router.put("/updateUser",authenticate,updatedData,validateAdminData,async(req:Request,res:Response)=>{
+router.put(
+  "/updateUser",
+  authenticate,
+  updatedData,
+  validateAdminData,
+  async (req: Request, res: Response) => {
     try {
-         const message=await updateAdminData(req.body,req.shop_Details)
-         if(message===DATA_NOT_SAVED){
-            return res.status(401).json({
-             isError:true,
-            message:DATA_NOT_SAVED,
-            data:{}
-        })
-         }
-         else if(message===DATA_UPDATED){
-            return res.status(200).json({
-             isError:false,
-            message:"success",
-            data:DATA_UPDATED
-        })
-         }
-         else{
-             return res.status(200).json({
-             isError:false,
-            message:"success",
-            data:message
-        })
-         }
+      const updatedAdmin = await updateAdminData(
+        req.body,
+        req.shop_Details
+      );
+
+      if (!updatedAdmin) {
+        return res.status(400).json({
+          isError: true,
+          message: DATA_NOT_SAVED,
+          data: {}
+        });
+      }
+
+      return res.status(200).json({
+        isError: false,
+        message: "Admin updated successfully",
+        data: updatedAdmin  
+      });
+
     } catch (error) {
-        return res.status(500).json({
-             isError:true,
-            message:INTERNAL_SERVER_ERROR,
-            data:error
-        })
+      return res.status(500).json({
+        isError: true,
+        message: INTERNAL_SERVER_ERROR,
+        data: {}
+      });
     }
-   
-})
+  }
+);
+
 
 router.post("/logout", authenticate, async (req: Request, res: Response) => {
   try {

@@ -127,20 +127,20 @@ export let forgetEmailVali=[
 // ]
 
 export let validateemailAndPass=[
-     body("email")
-    .trim()
-    .notEmpty().withMessage(DATAMISSING).bail()
-    .custom((val) => {
+//      body("email")
+//     .trim()
+//     .notEmpty().withMessage(DATAMISSING).bail()
+//     .custom((val) => {
 
-  if (!val.includes("@")) {
-    throw new Error(EMAIL_MUST_CONTAIN);
-  }
-  if (!validEmail.includes(val.split("@")[1])) {
-    throw new Error(NOT_VALID_EMAIL);
-  }
-  return true;
-})
-,
+//   if (!val.includes("@")) {
+//     throw new Error(EMAIL_MUST_CONTAIN);
+//   }
+//   if (!validEmail.includes(val.split("@")[1])) {
+//     throw new Error(NOT_VALID_EMAIL);
+//   }
+//   return true;
+// })
+// ,
 body("password")
 .trim()
 .notEmpty().withMessage(DATAMISSING).bail()
@@ -188,18 +188,21 @@ body("gst_percentage")
 .isInt({min:0,max:50}).withMessage("GST will be in the range of 0 to 50")   
 ]
 
-export let productData=[
+export let productData = [
   body("name")
-  .notEmpty().withMessage("name can't be Empty")
-  ,
+    .trim()
+    .notEmpty().withMessage("Name can't be empty"),
+
   body("category")
-  .notEmpty().withMessage("category can't be Empty")
-  ,
+    .trim()
+    .notEmpty().withMessage("Category can't be empty"),
 
   body("price")
-  .notEmpty().withMessage("This can't be Empty").bail()
-  .isFloat({min:1,max:100000}).withMessage("Product price will be in the range 0 to 100000")
-]
+    .trim()
+    .exists({ checkFalsy: true }).withMessage("Price can't be empty") 
+    .bail()
+    .isFloat({ min: 1, max: 100000 }).withMessage("Product price must be between 1 and 100000")
+];
 
 
 

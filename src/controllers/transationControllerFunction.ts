@@ -1,8 +1,5 @@
-import express, { Request, Response } from "express";
-import { Transaction } from "../types/TransactionData";
-import { saveTransactionSer } from "../services/transactionservice";
-
-
+import { Request, Response } from "express";
+import { CreateTransactionDTO, saveTransactionSer } from "../services/transactionservice";
 
 const DB_STORE_SHOP_TYPES = [
   "furniture",
@@ -12,7 +9,7 @@ const DB_STORE_SHOP_TYPES = [
 ];
 
 export const saveTransactionCon = async (
-  req: Request<{}, {}, any[]>,
+  req: Request<{}, {}, CreateTransactionDTO[]>,
   res: Response
 ) => {
   try {

@@ -17,7 +17,7 @@ export async function registerAdmin(
   reqBody: any
 ): Promise<RegisterAdminResult> {
   try {
-    // console.log(reqBody);
+    console.log(reqBody);
     const existingUser = await prisma.shop_Owner.findFirst({
        where:{
         OR:[
@@ -58,7 +58,7 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
     console.log(loginData)
     const user = await prisma.shop_Owner.findFirst({
       where: { email: loginData.email },
-      // include: { subscriptionDetails: true }
+      
     });
    console.log(user)
     if (!user) return null;
@@ -133,10 +133,11 @@ export async function handleForgotPassword(email: string): Promise<{
       { expiresIn: "15m" }
     );
 // console.log(resetToken)
-    const resetLink = `https://quickledger-bill.netlify.app/forget-email?token=${resetToken}`;
+    const resetLink = `http://localhost:9002/reset-password?token=${resetToken}`;
 
+    const mainDomain=`https://quick-ledger.vercel.app/reset-password?token=${resetToken}`
 
-    await sendResetEmail(email, resetLink);
+    await sendResetEmail(email, resetLink,mainDomain);
 
     return { success: true };
 
@@ -154,11 +155,13 @@ export async function saveThePassword(params: {
   password: string;
 }): Promise<{ success: boolean; reason?: string }> {
   try {
+    // console.log(password)
     const decoded = jwt.verify(
       params.token,
       process.env.JWT_RESET_SECRET as string
     ) as { id: string };
-
+    // console.log(params.password)
+    // console.log(params.token)
     const hashedPassword = await hashingPassword(params.password);
 
     await prisma.shop_Owner.update({
@@ -173,27 +176,28 @@ export async function saveThePassword(params: {
   }
 }
 
-export async function updateAdminData(reqBody:any,shopDetails:any):Promise<String> {
+export async function updateAdminData(
+  reqBody: any,
+  shopDetails: any
+): Promise<any> {
   try {
-    // console.log(shopDetails);
-  const data=  await prisma.shop_Owner.update({
-      where:{id:shopDetails.shop_id},
-      data:{
-        email:reqBody.email,
-        phone:reqBody.phone,
-        shop_name:reqBody.shop_name,
-        shop_type:reqBody.shop_type,
-        welcomeMessage:reqBody.vist_message,
-        gst_enabled:reqBody.gst_enabled,
-        gst_percentage:reqBody.gst_percentage
+    const data = await prisma.shop_Owner.update({
+      where: { id: shopDetails.shop_id },
+      data: {
+        email: reqBody.email,
+        phone: reqBody.phone,
+        shop_name: reqBody.shop_name,
+        shop_type: reqBody.shop_type,
+        welcomeMessage: reqBody.vist_message,
+        gst_enabled: reqBody.gst_enabled,
+        gst_percentage: reqBody.gst_percentage
       }
-    })
-    if(!data){
-      return DATA_NOT_SAVED;
-    }
-    return DATA_UPDATED;
+    });
+
+    return data; 
+
   } catch (error) {
-    return INTERNAL_SERVER_ERROR;
+    console.error(error);
+    throw new Error(INTERNAL_SERVER_ERROR); 
   }
-  
 }

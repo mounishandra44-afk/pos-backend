@@ -10,7 +10,7 @@ import "./cron/checkingSubscriptionStatus.cron";
 const app=express();
 app.use(
   cors({
-    origin: ["http://localhost:9002","http://192.168.0.12:9002","https://quickledger-bill.netlify.app"],
+    origin: ["http://localhost:9002","http://192.168.0.23:9002","https://quickledger-bill.netlify.app","https://quick-ledger.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   })
