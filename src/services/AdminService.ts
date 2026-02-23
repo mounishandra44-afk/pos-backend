@@ -55,19 +55,19 @@ export async function registerAdmin(
 
 export async function checkAdminCredentials(loginData: AdminLogin_Data) {
   try {
-    console.log(loginData)
+    // console.log(loginData)
     const user = await prisma.shop_Owner.findFirst({
       where: { email: loginData.email },
       
     });
-   console.log(user)
+  //  console.log(user)
     if (!user) return null;
 
     const isMatched = await bcrypt.compare(
       loginData.password,
       user.password
     );
-    console.log(isMatched)
+    // console.log(isMatched)
 
     if (!isMatched) return null;
 
@@ -79,7 +79,7 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
         shop_type: user.shop_type
       },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: "15m" }
+      { expiresIn: "1d" }
     );
 
     

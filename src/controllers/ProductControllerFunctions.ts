@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Product } from "../types/ProductData";
-import { findProductInShop, getAllTheProductDetailsForParticularShop, saveDataFromTheFile, saveProductToShop } from "../services/Product";
+import { findProductInShop, getAllTheProductDetailsForParticularShop, saveDataFromTheFile, saveProductToShop, updateProductData } from "../services/Product";
 import { INTERNAL_SERVER_ERROR } from "../constData/ErrorMessages";
 
 import fs from "fs";
@@ -160,9 +160,11 @@ export const csvData = async (req: Request, res: Response) => {
     responseSent = true;
 
     return res.status(result.statusCode).json({
-      isError: result.isErr,
-      message: result.messages,
-    });
+  isError: result.isErr,
+  message: result.messages,
+  data: result.data || null,
+});
+
   });
 };
 
@@ -170,7 +172,9 @@ export const csvData = async (req: Request, res: Response) => {
 
 export const getAllTheProductDetails=async (req:Request,res:Response) => {
     try {
+      // console.log(req.shop_Details)
        const products= await getAllTheProductDetailsForParticularShop(req.shop_Details);
+      //  console.log(products.messages)
         return  res.status(products.statusCode).json({
     isError: false,
     message: products.messages
@@ -182,3 +186,26 @@ export const getAllTheProductDetails=async (req:Request,res:Response) => {
   });
     }
 }
+
+
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+    console.log(req.body)
+    const result = await updateProductData(
+      req.body,
+      req.shop_Details
+    );
+
+    return res.status(result.statusCode).json({
+      isError: result.isError,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      isError: true,
+      message: "Internal Server Error",
+      data: null,
+    });
+  }
+};

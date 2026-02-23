@@ -9,6 +9,10 @@ import { loginLimiter } from "../middlewares/RateLimiting";
 import { prisma } from "../types/prisma";
 import jwt, { JwtPayload } from "jsonwebtoken"
 const router=express.Router();
+
+router.get('/health',(req:Request,res:Response)=>{
+  res.status(200).json({message:"Backend is responding"})
+})
 router.post("/adminRegister", allData, validateAdminData,
   async (req: Request<{}, {}, Admin_shop>, res: Response) => {
 
