@@ -89,7 +89,7 @@ router.post(
 
 router.post("/refresh-token", async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
-
+console.log("refresh-token-api-is called")
   if (!refreshToken) {
     return res.status(401).json({ message: "Refresh token required" });
   }
@@ -97,27 +97,22 @@ router.post("/refresh-token", async (req: Request, res: Response) => {
   try {
     const decoded = jwt.verify(
       refreshToken,
-      process.env.JWT_REFRESH_SECRET as string
+      process.env.JWT_REFRESH_SECRET!
     ) as jwt.JwtPayload;
 
     const user = await prisma.shop_Owner.findUnique({
       where: { id: decoded.id }
     });
-    console.log(user)
 
     if (!user || user.refreshToken !== refreshToken) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
+    
     const newAccessToken = jwt.sign(
-      {
-        id: user.id,
-        userName: user.userName,
-        email: user.email,
-        shop_type: user.shop_type
-      },
-      process.env.JWT_ACCESS_SECRET as string,
-      { expiresIn: "15m" }
+      { id: user.id },
+      process.env.JWT_ACCESS_SECRET!,
+      { expiresIn: "1d" }
     );
 
     return res.status(200).json({ accessToken: newAccessToken });
@@ -129,7 +124,6 @@ router.post("/refresh-token", async (req: Request, res: Response) => {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 });
-
 
 router.post(
   "/forget-password",
@@ -169,7 +163,7 @@ router.put(
   async (req: Request, res: Response) => {
     try {
       const result = await saveThePassword(req.body);
-      console.log(req.body)
+      // console.log(req.body)
       if (!result.success) {
         return res.status(400).json({
           isError: true,

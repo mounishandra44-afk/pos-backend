@@ -11,7 +11,7 @@ import settings from "./controllers/SettingsRoute";
 const app=express();
 app.use(
   cors({
-    origin: ["http://localhost:9002","http://192.168.0.12:9002","https://quickledger-bill.netlify.app","https://quick-ledger.vercel.app"],
+    origin: ["http://34.93.113.174:9002","http://192.168.0.26:9002","https://quickledger-bill.netlify.app","https://quick-ledger.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   })
@@ -25,4 +25,4 @@ app.use("/product",myProduct)
 app.use("/transaction",transactionRouter)
 app.use("/report",report)
 app.use("/settings",settings)
-app.listen(8000,"0.0.0.0",()=>console.log("the app is started 8000"))
+app.listen(8000,()=>console.log("the app is started 8000"))

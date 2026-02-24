@@ -55,34 +55,26 @@ export async function registerAdmin(
 
 export async function checkAdminCredentials(loginData: AdminLogin_Data) {
   try {
-    // console.log(loginData)
     const user = await prisma.shop_Owner.findFirst({
       where: { email: loginData.email },
-      
     });
-  //  console.log(user)
+
     if (!user) return null;
 
     const isMatched = await bcrypt.compare(
       loginData.password,
       user.password
     );
-    // console.log(isMatched)
 
     if (!isMatched) return null;
 
+   
     const accessToken = jwt.sign(
-      {
-        id: user.id,
-        userName: user.userName,
-        email: user.email,
-        shop_type: user.shop_type
-      },
+      { id: user.id },
       process.env.JWT_ACCESS_SECRET!,
       { expiresIn: "1d" }
     );
 
-    
     const refreshToken = jwt.sign(
       { id: user.id },
       process.env.JWT_REFRESH_SECRET!,
@@ -107,7 +99,6 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
     };
 
   } catch (error) {
-    // console.error("Login Error:", error);
     return null;
   }
 }
@@ -133,11 +124,10 @@ export async function handleForgotPassword(email: string): Promise<{
       { expiresIn: "15m" }
     );
 // console.log(resetToken)
-    const resetLink = `http://localhost:9002/reset-password?token=${resetToken}`;
+    const resetLink = `http://34.93.113.174:9002/reset-password?token=${resetToken}`;
 
-    const mainDomain=`https://quick-ledger.vercel.app/reset-password?token=${resetToken}`
 
-    await sendResetEmail(email, resetLink,mainDomain);
+    await sendResetEmail(email, resetLink);
 
     return { success: true };
 
@@ -197,7 +187,7 @@ export async function updateAdminData(
     return data; 
 
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     throw new Error(INTERNAL_SERVER_ERROR); 
   }
 }

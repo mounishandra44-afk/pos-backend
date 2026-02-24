@@ -1,5 +1,5 @@
 import { Request,Response } from "express";
-import { getDailyReportData, getOverViewData } from "../services/ReportsService";
+import { getDailyReportData, getDashboardData, getLast30DaysData, getLastYearData, getOverViewData } from "../services/ReportsService";
 import { Dates } from "../types/FromDateToDate";
 
 export const dayilyData = async (req: Request, res: Response) => {
@@ -31,3 +31,62 @@ export const overviewData=async(req:Request,res:Response)=>{
          return {statusCode:500,messages:error,isErr:true};
     }
 }
+
+export const dashboardData = async (req: Request, res: Response) => {
+  try {
+    const result = await getDashboardData(req.shop_Details);
+    // console.log(result)
+    return res.status(result.statusCode).json({
+      isError: result.isErr,
+      data: result.messages,
+    });
+
+  } catch (error) {
+    console.error("Dashboard error:", error);
+
+    return res.status(500).json({
+      isError: true,
+      message: "Unexpected server error",
+    });
+  }
+};
+
+export const last30DaysController = async (req: Request, res: Response) => {
+  try {
+    const result = await getLast30DaysData(req.shop_Details);
+
+    return res.status(result.statusCode).json({
+      isError: result.isErr,
+      data: result.messages
+    });
+
+  } catch (error) {
+    console.error("Last 30 Days Controller Error:", error);
+
+    return res.status(500).json({
+      isError: true,
+      message: "Unexpected server error"
+    });
+  }
+};
+
+export const last1YearController = async (req: Request, res: Response) => {
+  try {
+    const result = await getLastYearData(req.shop_Details);
+
+    return res.status(result.statusCode).json({
+      isError: result.isErr,
+      data: result.messages
+    });
+
+  } catch (error) {
+    console.error("Last 1 Year Controller Error:", error);
+
+    return res.status(500).json({
+      isError: true,
+      message: "Unexpected server error"
+    });
+  }
+};
+
+

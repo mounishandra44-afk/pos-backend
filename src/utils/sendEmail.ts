@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export async function sendResetEmail(to: string, resetLink: string,mainDomain:string) {
+export async function sendResetEmail(to: string, resetLink: string) {
   // console.log("this is in the send email functionality")
   // console.log(to)
   const transporter = nodemailer.createTransport({
@@ -18,9 +18,6 @@ export async function sendResetEmail(to: string, resetLink: string,mainDomain:st
     html: `
       <h3>Password Reset</h3>
       <p>Click below link to reset your password:</p>
-     <h3> this is for the deployed ones</h3>
-      <a href="${mainDomain}">${mainDomain}</a>
-      <h3>this is for the localhost user</h3>
       <a href="${resetLink}">${resetLink}</a>
       <p>This link expires in 15 minutes.</p>
     `

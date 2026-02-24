@@ -103,7 +103,7 @@ export const updateProductData = async (
   try {
     const { id, name, category, productShortCut, price } =
       reqBody;
-console.log(reqBody)
+// console.log(reqBody)
     if (!id) {
       return {
         statusCode: 400,

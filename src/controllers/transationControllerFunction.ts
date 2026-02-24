@@ -5,7 +5,8 @@ const DB_STORE_SHOP_TYPES = [
   "furniture",
   "electronics",
   "automobiles",
-  "supermarket"
+  "supermarket",
+  "hardware"
 ];
 
 export const saveTransactionCon = async (
@@ -13,7 +14,7 @@ export const saveTransactionCon = async (
   res: Response
 ) => {
   try {
-
+console.log(req.shop_Details)
     if (!req.shop_Details) {
       return res.status(401).json({
         isError: true,
