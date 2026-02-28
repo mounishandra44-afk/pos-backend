@@ -90,6 +90,7 @@ model Shop_Owner {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   subscriptionDetails SubscriptionDetails[]
+  bill bills[]
 }
 
 model Product {
@@ -157,6 +158,17 @@ model staff{
   createdAt DateTime @default(now())
   shop             Shop_Owner @relation(fields: [shopId], references: [id])
   shopId           String  @db.Uuid
+
+}
+
+model bills{
+   id           String   @id @default(uuid()) @db.Uuid
+  salesamount   Decimal    @db.Decimal(10,2)
+  salesCount   Int 
+
+  shop             Shop_Owner @relation(fields: [shopId], references: [id])
+  shopId           String  @db.Uuid 
+   createdAt DateTime @default(now())
 
 }
 

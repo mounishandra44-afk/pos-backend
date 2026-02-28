@@ -1,16 +1,8 @@
 import { Request, Response } from "express";
 import { CreateTransactionDTO, saveTransactionSer } from "../services/transactionservice";
 
-const DB_STORE_SHOP_TYPES = [
-  "furniture",
-  "electronics",
-  "automobiles",
-  "supermarket",
-  "hardware"
-];
-
 export const saveTransactionCon = async (
-  req: Request<{}, {}, CreateTransactionDTO[]>,
+  req: Request<{}, {}, CreateTransactionDTO[] | CreateTransactionDTO>,
   res: Response
 ) => {
   try {
@@ -19,15 +11,6 @@ console.log(req.shop_Details)
       return res.status(401).json({
         isError: true,
         data: "Unauthorized"
-      });
-    }
-
-    const shopType = req.shop_Details.shop_type.toLowerCase();
-
-    if (!DB_STORE_SHOP_TYPES.includes(shopType)) {
-      return res.status(200).json({
-        isError: false,
-        data: "IndexedDB mode enabled"
       });
     }
 

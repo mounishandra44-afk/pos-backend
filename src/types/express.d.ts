@@ -9,6 +9,12 @@ declare global {
         shop_email: string;
         shop_type:string
       };
+      auth_Details: {
+        role: "ADMIN" | "STAFF";
+        userType: string;
+        shop_id: string;
+        staff_id?: string;
+      };
     }
   }
 }

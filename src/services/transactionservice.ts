@@ -28,12 +28,15 @@ type TransactionItemInput = {
 
 
 export const saveTransactionSer = async (
-  transactions: CreateTransactionDTO[],
+  transactions: CreateTransactionDTO[] | CreateTransactionDTO,
   shop_Details: { shop_id: string }
 ) => {
   try {
+    const normalizedTransactions = Array.isArray(transactions)
+      ? transactions
+      : [transactions];
 
-    if (!Array.isArray(transactions) || transactions.length === 0) {
+    if (normalizedTransactions.length === 0) {
       return {
         isErr: true,
         statusCode: 400,
@@ -58,7 +61,7 @@ export const saveTransactionSer = async (
  const createdTransactions: Transaction[] = [];
 
 
-      for (const transactionObject of transactions) {
+      for (const transactionObject of normalizedTransactions) {
 
         if (!transactionObject.transac_Item?.length) {
           throw new Error("Transaction items missing");

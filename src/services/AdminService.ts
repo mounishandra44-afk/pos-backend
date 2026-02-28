@@ -80,7 +80,7 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
 
    
     const accessToken = jwt.sign(
-      { id: user.id },
+      { id: user.id, role: "ADMIN", userType: "shop_owner" },
       process.env.JWT_ACCESS_SECRET!,
       { expiresIn: "1d" }
     );
@@ -100,6 +100,7 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
     return {
       accessToken,
       refreshToken,
+      role: "ADMIN",
       shop: {
         id: user.id,
         userName: user.userName,
@@ -109,6 +110,55 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
     };
 
   } catch (error) {
+    return null;
+  }
+}
+
+export async function checkStaffCredentials(loginData: AdminLogin_Data) {
+  try {
+    const staffUser = await prisma.staff.findUnique({
+      where: { email: loginData.email },
+      include: {
+        shop: true
+      }
+    });
+
+    if (!staffUser) return null;
+
+    const isMatched = await bcrypt.compare(
+      loginData.password,
+      staffUser.password
+    );
+
+    if (!isMatched) return null;
+
+    const accessToken = jwt.sign(
+      {
+        id: staffUser.shopId,
+        role: "STAFF",
+        userType: "staff",
+        staffId: staffUser.id
+      },
+      process.env.JWT_ACCESS_SECRET!,
+      { expiresIn: "1d" }
+    );
+
+    return {
+      accessToken,
+      role: "STAFF",
+      staff: {
+        id: staffUser.id,
+        username: staffUser.username,
+        email: staffUser.email
+      },
+      shop: {
+        id: staffUser.shop.id,
+        userName: staffUser.shop.userName,
+        email: staffUser.shop.email,
+        shop_type: staffUser.shop.shop_type
+      }
+    };
+  } catch {
     return null;
   }
 }

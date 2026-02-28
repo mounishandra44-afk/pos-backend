@@ -177,7 +177,8 @@ export const getAllTheProductDetails=async (req:Request,res:Response) => {
       //  console.log(products.messages)
         return  res.status(products.statusCode).json({
     isError: false,
-    message: products.messages
+    message: products.messages,
+    data: products.messages
   })
     } catch (error) {
         return res.status(500).json({

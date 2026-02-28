@@ -58,35 +58,12 @@ export let loginDataVali=[
      body("email")
     .trim()
     .notEmpty().withMessage(DATAMISSING).bail()
-    .custom((val) => {
-
-  if (!val.includes("@")) {
-    throw new Error(EMAIL_MUST_CONTAIN);
-  }
-  if (!validEmail.includes(val.split("@")[1])) {
-    throw new Error(NOT_VALID_EMAIL);
-  }
-  return true;
-})
+    .isEmail().withMessage(NOT_VALID_EMAIL)
 ,
 body("password")
 .trim()
 .notEmpty().withMessage(DATAMISSING).bail()
-.isLength({ min: 8, max: 50 }).withMessage(PASSWORD_MUST_BE_IN_RANGE).bail()
-.custom((val)=>{
-  if (!/[!@#$%^&*]/.test(val)) {
-    throw new Error(PASSWORD_MUST_SPECAIL);
-  }
-
-  if (!/[0-9]/.test(val)) {
-    throw new Error(PASSWORD_MUST_NUMBER);
-  }
-
-  if (!/[a-zA-Z]/.test(val)) {
-    throw new Error(PASSWORD_MUST_ALPHABET);
-  }
-    return true;
-})   
+.isLength({ min: 6, max: 50 }).withMessage("Password length must be in the range of 6 and 50")
 ]
 
 export let forgetEmailVali=[

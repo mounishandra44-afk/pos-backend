@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { allData, forgetEmailVali, loginDataVali, updatedData, validateAdminData, validateemailAndPass } from "../middlewares/DataValidation";
-import { addStaffService, checkAdminCredentials, getStaffByShopService, handleForgotPassword, registerAdmin, saveThePassword, updateAdminData } from "../services/AdminService";
+import { addStaffService, checkAdminCredentials, checkStaffCredentials, getStaffByShopService, handleForgotPassword, registerAdmin, saveThePassword, updateAdminData } from "../services/AdminService";
 import { DATA_NOT_SAVED, DATA_UPDATED, EMAIL_ALREADY_EXSITS, EMAIL_FOUND, EMAIL_NOT_FOUND, INTERNAL_SERVER_ERROR, INVALID_CREDENTIALS, LOGIN_SUCCESSFULL, PASSWORD_SAVED, SHOP_ADMIN_CREATED } from "../constData/ErrorMessages";
 import { Admin_shop, AdminLogin_Data, NewPasswordData } from "../types/AdminData";
 import { authenticate } from "../middlewares/authentication";
@@ -8,6 +8,7 @@ import { AuthRequest } from "../types/customRequest";
 import { loginLimiter } from "../middlewares/RateLimiting";
 import { prisma } from "../types/prisma";
 import jwt, { JwtPayload } from "jsonwebtoken"
+import { requireAdmin } from "../middlewares/authorization";
 const router=express.Router();
 
 router.get('/health',(req:Request,res:Response)=>{
@@ -61,7 +62,11 @@ router.post(
   validateAdminData,
   async (req: Request<{}, {}, AdminLogin_Data>, res: Response) => {
     try {
-      const result = await checkAdminCredentials(req.body);
+      let result = await checkAdminCredentials(req.body);
+
+      if (!result) {
+        result = await checkStaffCredentials(req.body) as any;
+      }
 
       if (!result) {
         return res.status(401).json({
@@ -189,6 +194,7 @@ router.put(
 router.put(
   "/updateUser",
   authenticate,
+  requireAdmin,
   updatedData,
   validateAdminData,
   async (req: Request, res: Response) => {
@@ -246,6 +252,7 @@ router.post("/logout", authenticate, async (req: Request, res: Response) => {
 router.post(
   "/addStaff",
   authenticate,
+  requireAdmin,
   async (req: Request, res: Response) => {
     try {
       const username = String(req.body?.username ?? req.body?.userName ?? "").trim();
@@ -310,7 +317,7 @@ router.post(
   }
 );
 
-router.get("/staff", authenticate, async (req: Request, res: Response) => {
+router.get("/staff", authenticate, requireAdmin, async (req: Request, res: Response) => {
   try {
     const staffs = await getStaffByShopService(req.shop_Details);
 
@@ -328,7 +335,7 @@ router.get("/staff", authenticate, async (req: Request, res: Response) => {
   }
 });
 
-router.get("/getStaff", authenticate, async (req: Request, res: Response) => {
+router.get("/getStaff", authenticate, requireAdmin, async (req: Request, res: Response) => {
   try {
     const staffs = await getStaffByShopService(req.shop_Details);
 

@@ -1,4 +1,12 @@
 import { prisma } from "../types/prisma";
+import { Prisma } from "@prisma/client";
+
+type CloseShopPayload = {
+  date?: string;
+  totalRevenue?: number;
+  totalBills?: number;
+  shopId?: string;
+};
 
  export const getDailyReportData= async (queryDates:any,shopDetails:any) => {
   try {
@@ -113,67 +121,54 @@ const response = {
   try {
     const shopId = shopDetails.shop_id;
 
-    const today = new Date();
-    const last7Days = new Date();
-    last7Days.setDate(today.getDate() - 6); 
-    last7Days.setHours(0, 0, 0, 0);
+    const [todaySummaryResult, busiestHourResult] = await Promise.all([
+      prisma.$queryRaw<
+        {
+          total_revenue: unknown;
+          total_transactions: unknown;
+          average_transaction: unknown;
+        }[]
+      >`
+        SELECT
+          COALESCE(SUM("totalAmount"), 0) AS total_revenue,
+          COUNT("id") AS total_transactions,
+          COALESCE(AVG("totalAmount"), 0) AS average_transaction
+        FROM "Transaction"
+        WHERE "shopId" = ${shopId}::uuid
+          AND DATE("createdAt") = CURRENT_DATE;
+      `,
 
-
-    const [
-      overallData,
-      busiestHourResult,
-      last7DaysData
-    ] = await Promise.all([
-
-      
-      prisma.transaction.aggregate({
-        where: { shopId },
-        _avg: { totalAmount: true },
-        _count: { id: true },
-        _sum: { totalAmount: true }
-      }),
-
-     
       prisma.$queryRaw<{ hour: number; total: bigint }[]>`
         SELECT 
           CAST(EXTRACT(HOUR FROM "createdAt") AS INTEGER) AS hour,
           COUNT(*) AS total
         FROM "Transaction"
         WHERE "shopId" = ${shopId}::uuid
+          AND DATE("createdAt") = CURRENT_DATE
         GROUP BY hour
         ORDER BY total DESC
         LIMIT 1;
-      `,
-
-      
-      prisma.$queryRaw<
-        { date: Date; total_amount: bigint; total_count: bigint }[]
-      >`
-        SELECT 
-          DATE("createdAt") as date,
-          SUM("totalAmount") as total_amount,
-          COUNT("id") as total_count
-        FROM "Transaction"
-        WHERE 
-          "shopId" = ${shopId}::uuid
-          AND "createdAt" >= ${last7Days}
-        GROUP BY DATE("createdAt")
-        ORDER BY DATE("createdAt") ASC;
       `
     ]);
 
     const busiestHourData = busiestHourResult?.[0];
+    const todaySummary = todaySummaryResult?.[0] ?? {
+      total_revenue: 0,
+      total_transactions: 0,
+      average_transaction: 0
+    };
 
-    const last7DaysFormatted = last7DaysData.map(item => ({
-      date: item.date,
-      totalAmount: Number(item.total_amount ?? 0),
-      totalTransactions: Number(item.total_count ?? 0)
-    }));
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+
+    const totalRevenue = Number(todaySummary.total_revenue ?? 0);
+    const totalTransactions = Number(todaySummary.total_transactions ?? 0);
+    const averageTransaction = Number(todaySummary.average_transaction ?? 0);
 
     const response = {
-      totalTransactions: overallData._count?.id ?? 0,
-      totalRevenue: Number(overallData._sum?.totalAmount ?? 0),
-      averageTransaction: Number(overallData._avg?.totalAmount ?? 0),
+      totalTransactions,
+      totalRevenue,
+      averageTransaction,
 
       busiestHour: busiestHourData
         ? {
@@ -182,7 +177,13 @@ const response = {
           }
         : null,
 
-      last7Days: last7DaysFormatted
+      last7Days: [
+        {
+          date: todayDate,
+          totalAmount: totalRevenue,
+          totalTransactions
+        }
+      ]
     };
 
     return {
@@ -284,6 +285,109 @@ export const getLastYearData = async (shopDetails: any) => {
       isErr: true,
       statusCode: 500,
       messages: "Last 1 year report failed"
+    };
+  }
+};
+
+export const saveCloseShopReport = async (
+  payload: CloseShopPayload,
+  shopDetails: any
+) => {
+  try {
+    const inputDate = String(payload?.date ?? "").trim();
+    if (!inputDate) {
+      return {
+        isErr: true,
+        statusCode: 400,
+        messages: "Date is required"
+      };
+    }
+
+    const parsedDate = new Date(inputDate);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return {
+        isErr: true,
+        statusCode: 400,
+        messages: "Invalid date format"
+      };
+    }
+
+    const totalRevenue = Number(payload?.totalRevenue ?? 0);
+    const totalBills = Number(payload?.totalBills ?? 0);
+
+    if (!Number.isFinite(totalRevenue) || totalRevenue < 0) {
+      return {
+        isErr: true,
+        statusCode: 400,
+        messages: "totalRevenue must be a non-negative number"
+      };
+    }
+
+    if (!Number.isFinite(totalBills) || totalBills < 0) {
+      return {
+        isErr: true,
+        statusCode: 400,
+        messages: "totalBills must be a non-negative number"
+      };
+    }
+
+    const dayStart = new Date(parsedDate);
+    dayStart.setHours(0, 0, 0, 0);
+
+    const dayEnd = new Date(parsedDate);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const existingDailyBill = await prisma.bills.findFirst({
+      where: {
+        shopId: shopDetails.shop_id,
+        createdAt: {
+          gte: dayStart,
+          lte: dayEnd
+        }
+      }
+    });
+
+    if (existingDailyBill) {
+      const updated = await prisma.bills.update({
+        where: { id: existingDailyBill.id },
+        data: {
+          salesamount: new Prisma.Decimal(totalRevenue),
+          salesCount: Math.floor(totalBills)
+        }
+      });
+
+      return {
+        isErr: false,
+        statusCode: 200,
+        messages: {
+          message: "Daily report updated successfully",
+          data: updated
+        }
+      };
+    }
+
+    const created = await prisma.bills.create({
+      data: {
+        salesamount: new Prisma.Decimal(totalRevenue),
+        salesCount: Math.floor(totalBills),
+        shopId: shopDetails.shop_id,
+        createdAt: dayStart
+      }
+    });
+
+    return {
+      isErr: false,
+      statusCode: 201,
+      messages: {
+        message: "Daily report saved successfully",
+        data: created
+      }
+    };
+  } catch (error) {
+    return {
+      isErr: true,
+      statusCode: 500,
+      messages: "Failed to save close shop report"
     };
   }
 };
