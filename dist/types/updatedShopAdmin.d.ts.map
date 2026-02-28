@@ -1,0 +1,1 @@
+{"version":3,"file":"updatedShopAdmin.d.ts","sourceRoot":"","sources":["../../src/types/updatedShopAdmin.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,mBAAmB;IAClC,KAAK,EAAG,MAAM,CAAA;IACd,KAAK,EAAG,MAAM,CAAA;IACd,SAAS,EAAG,MAAM,CAAA;IAClB,SAAS,EAAI,MAAM,CAAA;IACnB,WAAW,EAAC,OAAO,CAAA;IACnB,cAAc,EAAC,MAAM,CAAA;IACrB,YAAY,EAAC,MAAM,CAAA;CAEpB"}

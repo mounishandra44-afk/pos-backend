@@ -188,6 +188,23 @@ body("gst_percentage")
 .isInt({min:0,max:50}).withMessage("GST will be in the range of 0 to 50")   
 ]
 
+export const staffDataVali = [
+  body("username")
+    .trim()
+    .notEmpty().withMessage(DATAMISSING).bail()
+    .isLength({ min: 3, max: 50 }).withMessage(USERNAME_MIN_MAX),
+
+  body("email")
+    .trim()
+    .notEmpty().withMessage(DATAMISSING).bail()
+    .isEmail().withMessage(NOT_VALID_EMAIL),
+
+  body("password")
+    .trim()
+    .notEmpty().withMessage(DATAMISSING).bail()
+    .isLength({ min: 6, max: 50 }).withMessage("Password length must be in the range of 6 and 50")
+];
+
 export let productData = [
   body("name")
     .trim()
@@ -233,7 +250,7 @@ export const validateDateRange = [
 export const validateAdminData=  (req:Request<{},{},Admin_shop>,res:Response,next:NextFunction)=>{
 
   try {
-     const error= validationResult(req );
+     const error= validationResult(req);
     if(!error.isEmpty()){
        const validationErrors= error.array().map(err=>({
             field:err.type,

@@ -11,7 +11,7 @@ import settings from "./controllers/SettingsRoute";
 const app=express();
 app.use(
   cors({
-    origin: ["http://34.93.113.174:9002","http://192.168.0.26:9002","https://quickledger-bill.netlify.app","https://quick-ledger.vercel.app"],
+    origin: ["http://localhost:9002","http://192.168.0.23:9002","https://quickledger-bill.netlify.app","https://quick-ledger.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   })

@@ -1,0 +1,20 @@
+export declare const DATAMISSING: string;
+export declare const USERNAME_MIN_MAX: string;
+export declare const NOT_VALID_PHONE: string;
+export declare const EMAIL_MUST_CONTAIN: string;
+export declare const NOT_VALID_EMAIL: string;
+export declare const PASSWORD_MUST_BE_IN_RANGE: string;
+export declare const PASSWORD_MUST_SPECAIL: string;
+export declare const PASSWORD_MUST_NUMBER: string;
+export declare const PASSWORD_MUST_ALPHABET: string;
+export declare const EMAIL_ALREADY_EXSITS: string;
+export declare const SHOP_ADMIN_CREATED: string;
+export declare const INVALID_CREDENTIALS: string;
+export declare const LOGIN_SUCCESSFULL: string;
+export declare const EMAIL_NOT_FOUND: string;
+export declare const EMAIL_FOUND: string;
+export declare const INTERNAL_SERVER_ERROR: string;
+export declare const PASSWORD_SAVED: string;
+export declare const DATA_NOT_SAVED: string;
+export declare const DATA_UPDATED: string;
+//# sourceMappingURL=ErrorMessages.d.ts.map

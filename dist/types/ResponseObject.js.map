@@ -1,0 +1,1 @@
+{"version":3,"file":"ResponseObject.js","sourceRoot":"","sources":["../../src/types/ResponseObject.ts"],"names":[],"mappings":";;;AAAA,MAAa,wBAAwB;IACjC,OAAO,CAAQ;IACf,OAAO,CAAO;IACd,IAAI,CAAM;IAEV,YAAa,OAAe,EAAE,OAAc,EAAE,KAAW;QACrD,IAAI,CAAC,OAAO,GAAC,OAAO,CAAA;QACpB,IAAI,CAAC,OAAO,GAAC,OAAO,CAAA;QACpB,IAAI,CAAC,IAAI,GAAC,KAAK,CAAA;IACnB,CAAC;CACJ;AAVD,4DAUC"}

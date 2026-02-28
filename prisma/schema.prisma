@@ -82,6 +82,7 @@ model Shop_Owner {
  refreshToken String? 
   products     Product[]
   transaction  Transaction[]
+  staff       staff[]
 
   gst_enabled  Boolean  @default(false)
   gst_percentage Int @default(0)
@@ -147,7 +148,17 @@ model SubscriptionDetails{
   createdAt DateTime @default(now())
 }
 
+model staff{
+  id              String   @id @default(uuid()) @db.Uuid
+  username        String
+  email           String @unique
+  password      String
+  role     String @default("STAFF")
+  createdAt DateTime @default(now())
+  shop             Shop_Owner @relation(fields: [shopId], references: [id])
+  shopId           String  @db.Uuid
 
+}
 
 // model User{
 //   id Int @id @default(autoincrement())

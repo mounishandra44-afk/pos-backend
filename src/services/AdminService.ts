@@ -9,6 +9,16 @@ import { AdminLogin_Data } from "../types/AdminData";
 import { sendResetEmail } from "../utils/sendEmail";
 dotenv.config();
 
+type StaffPayload = {
+  username: string;
+  email: string;
+  password: string;
+};
+
+type ShopContext = {
+  shop_id: string;
+};
+
 type RegisterAdminResult =
   | { success: true; data: any }
   | { success: false; reason: "EMAIL_EXISTS Or PHONE_EXISTS" | "SERVER_ERROR" };
@@ -44,7 +54,7 @@ export async function registerAdmin(
       }
     });
 
-    console.log(adminData);
+    // console.log(adminData);
     return { success: true, data: adminData };
 
   } catch (error) {
@@ -190,4 +200,70 @@ export async function updateAdminData(
     // console.error(error);
     throw new Error(INTERNAL_SERVER_ERROR); 
   }
+}
+
+type AddStaffResult =
+  | {
+      success: true;
+      data: {
+        id: string;
+        username: string;
+        email: string;
+        role: string;
+        createdAt: Date;
+      };
+    }
+  | { success: false; reason: "EMAIL_EXISTS" | "SERVER_ERROR" };
+
+export async function addStaffService(
+  payload: StaffPayload,
+  shopDetails: ShopContext
+): Promise<AddStaffResult> {
+  try {
+    const existingStaff = await prisma.staff.findUnique({
+      where: { email: payload.email }
+    });
+
+    if (existingStaff) {
+      return { success: false, reason: "EMAIL_EXISTS" };
+    }
+
+    const hashedPassword = await hashingPassword(payload.password);
+
+    const createdStaff = await prisma.staff.create({
+      data: {
+        username: payload.username,
+        email: payload.email,
+        password: hashedPassword,
+        shopId: shopDetails.shop_id
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    return { success: true, data: createdStaff };
+  } catch {
+    return { success: false, reason: "SERVER_ERROR" };
+  }
+}
+
+export async function getStaffByShopService(shopDetails: ShopContext) {
+  return prisma.staff.findMany({
+    where: { shopId: shopDetails.shop_id },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      role: true,
+      createdAt: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
 }

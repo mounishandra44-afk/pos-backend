@@ -1,0 +1,23 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DATA_UPDATED = exports.DATA_NOT_SAVED = exports.PASSWORD_SAVED = exports.INTERNAL_SERVER_ERROR = exports.EMAIL_FOUND = exports.EMAIL_NOT_FOUND = exports.LOGIN_SUCCESSFULL = exports.INVALID_CREDENTIALS = exports.SHOP_ADMIN_CREATED = exports.EMAIL_ALREADY_EXSITS = exports.PASSWORD_MUST_ALPHABET = exports.PASSWORD_MUST_NUMBER = exports.PASSWORD_MUST_SPECAIL = exports.PASSWORD_MUST_BE_IN_RANGE = exports.NOT_VALID_EMAIL = exports.EMAIL_MUST_CONTAIN = exports.NOT_VALID_PHONE = exports.USERNAME_MIN_MAX = exports.DATAMISSING = void 0;
+exports.DATAMISSING = "This Field Expecting Data!";
+exports.USERNAME_MIN_MAX = "UserName name must be between 3 and 50 characters";
+exports.NOT_VALID_PHONE = "Phone must contain only digits";
+exports.EMAIL_MUST_CONTAIN = "Email must contain @";
+exports.NOT_VALID_EMAIL = "Email is not allowed";
+exports.PASSWORD_MUST_BE_IN_RANGE = "Password length must be in the range of 8 and 50";
+exports.PASSWORD_MUST_SPECAIL = "Password must contains the special character";
+exports.PASSWORD_MUST_NUMBER = "Password must contains at least one number";
+exports.PASSWORD_MUST_ALPHABET = "Password must contains at least one alphabet";
+exports.EMAIL_ALREADY_EXSITS = "Email is already exsists or Phone already exists";
+exports.SHOP_ADMIN_CREATED = "Admin Created successfully";
+exports.INVALID_CREDENTIALS = "What ever the details passed by user or invalid or not Found";
+exports.LOGIN_SUCCESSFULL = "User Logged Successful";
+exports.EMAIL_NOT_FOUND = "Email don't found";
+exports.EMAIL_FOUND = "Email Found";
+exports.INTERNAL_SERVER_ERROR = "Internal Error exists in the system";
+exports.PASSWORD_SAVED = "New Password is updated";
+exports.DATA_NOT_SAVED = "New Data is not updated";
+exports.DATA_UPDATED = "New data is updated";
+//# sourceMappingURL=ErrorMessages.js.map

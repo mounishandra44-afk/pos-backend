@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { allData, forgetEmailVali, loginDataVali, updatedData, validateAdminData, validateemailAndPass } from "../middlewares/DataValidation";
-import { checkAdminCredentials, handleForgotPassword, registerAdmin, saveThePassword, updateAdminData } from "../services/AdminService";
+import { addStaffService, checkAdminCredentials, getStaffByShopService, handleForgotPassword, registerAdmin, saveThePassword, updateAdminData } from "../services/AdminService";
 import { DATA_NOT_SAVED, DATA_UPDATED, EMAIL_ALREADY_EXSITS, EMAIL_FOUND, EMAIL_NOT_FOUND, INTERNAL_SERVER_ERROR, INVALID_CREDENTIALS, LOGIN_SUCCESSFULL, PASSWORD_SAVED, SHOP_ADMIN_CREATED } from "../constData/ErrorMessages";
 import { Admin_shop, AdminLogin_Data, NewPasswordData } from "../types/AdminData";
 import { authenticate } from "../middlewares/authentication";
@@ -239,6 +239,109 @@ router.post("/logout", authenticate, async (req: Request, res: Response) => {
     return res.status(500).json({
       isError: true,
       message: INTERNAL_SERVER_ERROR
+    });
+  }
+});
+
+router.post(
+  "/addStaff",
+  authenticate,
+  async (req: Request, res: Response) => {
+    try {
+      const username = String(req.body?.username ?? req.body?.userName ?? "").trim();
+      const email = String(req.body?.email ?? "").trim().toLowerCase();
+      const password = String(req.body?.password ?? "");
+
+      if (!username || username.length < 3 || username.length > 50) {
+        return res.status(400).json({
+          isError: true,
+          message: "Username must be between 3 and 50 characters",
+          data: {}
+        });
+      }
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        return res.status(400).json({
+          isError: true,
+          message: "Email is not valid",
+          data: {}
+        });
+      }
+
+      if (!password || password.length < 6 || password.length > 50) {
+        return res.status(400).json({
+          isError: true,
+          message: "Password length must be in the range of 6 and 50",
+          data: {}
+        });
+      }
+
+      const result = await addStaffService({ username, email, password }, req.shop_Details);
+
+      if (!result.success) {
+        if (result.reason === "EMAIL_EXISTS") {
+          return res.status(409).json({
+            isError: true,
+            message: EMAIL_ALREADY_EXSITS,
+            data: {}
+          });
+        }
+
+        return res.status(500).json({
+          isError: true,
+          message: INTERNAL_SERVER_ERROR,
+          data: {}
+        });
+      }
+
+      return res.status(201).json({
+        isError: false,
+        message: "Staff created successfully",
+        data: result.data
+      });
+    } catch {
+      return res.status(500).json({
+        isError: true,
+        message: INTERNAL_SERVER_ERROR,
+        data: {}
+      });
+    }
+  }
+);
+
+router.get("/staff", authenticate, async (req: Request, res: Response) => {
+  try {
+    const staffs = await getStaffByShopService(req.shop_Details);
+
+    return res.status(200).json({
+      isError: false,
+      message: "Staff fetched successfully",
+      data: staffs
+    });
+  } catch {
+    return res.status(500).json({
+      isError: true,
+      message: INTERNAL_SERVER_ERROR,
+      data: []
+    });
+  }
+});
+
+router.get("/getStaff", authenticate, async (req: Request, res: Response) => {
+  try {
+    const staffs = await getStaffByShopService(req.shop_Details);
+
+    return res.status(200).json({
+      isError: false,
+      message: "Staff fetched successfully",
+      data: staffs
+    });
+  } catch {
+    return res.status(500).json({
+      isError: true,
+      message: INTERNAL_SERVER_ERROR,
+      data: []
     });
   }
 });
