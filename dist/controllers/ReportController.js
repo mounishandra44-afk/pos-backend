@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.last1YearController = exports.last30DaysController = exports.dashboardData = exports.overviewData = exports.dayilyData = void 0;
+exports.closeShopController = exports.last1YearController = exports.last30DaysController = exports.dashboardData = exports.overviewData = exports.dayilyData = void 0;
 const ReportsService_1 = require("../services/ReportsService");
 const dayilyData = async (req, res) => {
     try {
@@ -81,4 +81,30 @@ const last1YearController = async (req, res) => {
     }
 };
 exports.last1YearController = last1YearController;
+const closeShopController = async (req, res) => {
+    try {
+        const result = await (0, ReportsService_1.saveCloseShopReport)(req.body, req.shop_Details);
+        if (result.isErr) {
+            return res.status(result.statusCode).json({
+                isError: true,
+                message: result.messages,
+                data: {}
+            });
+        }
+        const payload = result.messages;
+        return res.status(result.statusCode).json({
+            isError: false,
+            message: payload.message,
+            data: payload.data
+        });
+    }
+    catch {
+        return res.status(500).json({
+            isError: true,
+            message: "Unexpected server error",
+            data: {}
+        });
+    }
+};
+exports.closeShopController = closeShopController;
 //# sourceMappingURL=ReportController.js.map

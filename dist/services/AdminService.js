@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerAdmin = registerAdmin;
 exports.checkAdminCredentials = checkAdminCredentials;
+exports.checkStaffCredentials = checkStaffCredentials;
 exports.handleForgotPassword = handleForgotPassword;
 exports.saveThePassword = saveThePassword;
 exports.updateAdminData = updateAdminData;
@@ -60,7 +61,7 @@ async function checkAdminCredentials(loginData) {
         const isMatched = await bcrypt_1.default.compare(loginData.password, user.password);
         if (!isMatched)
             return null;
-        const accessToken = jsonwebtoken_1.default.sign({ id: user.id }, process.env.JWT_ACCESS_SECRET, { expiresIn: "1d" });
+        const accessToken = jsonwebtoken_1.default.sign({ id: user.id, role: "ADMIN", userType: "shop_owner" }, process.env.JWT_ACCESS_SECRET, { expiresIn: "1d" });
         const refreshToken = jsonwebtoken_1.default.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
         await prisma_1.prisma.shop_Owner.update({
             where: { id: user.id },
@@ -69,6 +70,7 @@ async function checkAdminCredentials(loginData) {
         return {
             accessToken,
             refreshToken,
+            role: "ADMIN",
             shop: {
                 id: user.id,
                 userName: user.userName,
@@ -78,6 +80,45 @@ async function checkAdminCredentials(loginData) {
         };
     }
     catch (error) {
+        return null;
+    }
+}
+async function checkStaffCredentials(loginData) {
+    try {
+        const staffUser = await prisma_1.prisma.staff.findUnique({
+            where: { email: loginData.email },
+            include: {
+                shop: true
+            }
+        });
+        if (!staffUser)
+            return null;
+        const isMatched = await bcrypt_1.default.compare(loginData.password, staffUser.password);
+        if (!isMatched)
+            return null;
+        const accessToken = jsonwebtoken_1.default.sign({
+            id: staffUser.shopId,
+            role: "STAFF",
+            userType: "staff",
+            staffId: staffUser.id
+        }, process.env.JWT_ACCESS_SECRET, { expiresIn: "1d" });
+        return {
+            accessToken,
+            role: "STAFF",
+            staff: {
+                id: staffUser.id,
+                username: staffUser.username,
+                email: staffUser.email
+            },
+            shop: {
+                id: staffUser.shop.id,
+                userName: staffUser.shop.userName,
+                email: staffUser.shop.email,
+                shop_type: staffUser.shop.shop_type
+            }
+        };
+    }
+    catch {
         return null;
     }
 }

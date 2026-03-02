@@ -1,6 +1,18 @@
 import { prisma } from "../types/prisma";
 import { Prisma } from "@prisma/client";
 
+const DAILY_ONLY_SHOP_TYPES = [
+  "cafe",
+  "retail",
+  "hybrid",
+  "garment",
+  "salon",
+  "hardware",
+  "bakery",
+  "stationery",
+  "other"
+] as const;
+
 type CloseShopPayload = {
   date?: string;
   totalRevenue?: number;
@@ -120,6 +132,88 @@ const response = {
  export const getDashboardData = async (shopDetails: any) => {
   try {
     const shopId = shopDetails.shop_id;
+    const normalizedShopType = String(shopDetails?.shop_type ?? "")
+      .trim()
+      .toLowerCase();
+    const isDailyOnlyShop = DAILY_ONLY_SHOP_TYPES.includes(
+      normalizedShopType as (typeof DAILY_ONLY_SHOP_TYPES)[number]
+    );
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const frozenDailyBill = await prisma.bills.findFirst({
+      where: {
+        shopId,
+        createdAt: {
+          gte: todayStart,
+          lte: todayEnd
+        }
+      }
+    });
+
+    if (frozenDailyBill) {
+      const totalRevenue = Number(frozenDailyBill.salesamount ?? 0);
+      const totalTransactions = Number(frozenDailyBill.salesCount ?? 0);
+      const averageTransaction =
+        totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
+      return {
+        isErr: false,
+        statusCode: 200,
+        messages: {
+          totalTransactions,
+          totalRevenue,
+          averageTransaction,
+          busiestHour: null,
+          last7Days: [
+            {
+              date: todayStart,
+              totalAmount: totalRevenue,
+              totalTransactions
+            }
+          ]
+        }
+      };
+    }
+
+    if (isDailyOnlyShop) {
+      const todayDailyRecord = await prisma.dailyTransactions.findFirst({
+        where: {
+          shopId,
+          date: {
+            gte: todayStart,
+            lte: todayEnd
+          }
+        }
+      });
+
+      const totalRevenue = Number(todayDailyRecord?.totalTransactionAmount ?? 0);
+      const totalTransactions = Number(todayDailyRecord?.totalTransactionCount ?? 0);
+      const averageTransaction =
+        totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
+      return {
+        isErr: false,
+        statusCode: 200,
+        messages: {
+          totalTransactions,
+          totalRevenue,
+          averageTransaction,
+          busiestHour: null,
+          last7Days: [
+            {
+              date: todayStart,
+              totalAmount: totalRevenue,
+              totalTransactions
+            }
+          ]
+        }
+      };
+    }
 
     const [todaySummaryResult, busiestHourResult] = await Promise.all([
       prisma.$queryRaw<
@@ -135,7 +229,8 @@ const response = {
           COALESCE(AVG("totalAmount"), 0) AS average_transaction
         FROM "Transaction"
         WHERE "shopId" = ${shopId}::uuid
-          AND DATE("createdAt") = CURRENT_DATE;
+          AND "createdAt" >= ${todayStart}
+          AND "createdAt" <= ${todayEnd};
       `,
 
       prisma.$queryRaw<{ hour: number; total: bigint }[]>`
@@ -144,7 +239,8 @@ const response = {
           COUNT(*) AS total
         FROM "Transaction"
         WHERE "shopId" = ${shopId}::uuid
-          AND DATE("createdAt") = CURRENT_DATE
+          AND "createdAt" >= ${todayStart}
+          AND "createdAt" <= ${todayEnd}
         GROUP BY hour
         ORDER BY total DESC
         LIMIT 1;
@@ -158,8 +254,7 @@ const response = {
       average_transaction: 0
     };
 
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
+    const todayDate = new Date(todayStart);
 
     const totalRevenue = Number(todaySummary.total_revenue ?? 0);
     const totalTransactions = Number(todaySummary.total_transactions ?? 0);
@@ -312,30 +407,55 @@ export const saveCloseShopReport = async (
       };
     }
 
-    const totalRevenue = Number(payload?.totalRevenue ?? 0);
-    const totalBills = Number(payload?.totalBills ?? 0);
-
-    if (!Number.isFinite(totalRevenue) || totalRevenue < 0) {
-      return {
-        isErr: true,
-        statusCode: 400,
-        messages: "totalRevenue must be a non-negative number"
-      };
-    }
-
-    if (!Number.isFinite(totalBills) || totalBills < 0) {
-      return {
-        isErr: true,
-        statusCode: 400,
-        messages: "totalBills must be a non-negative number"
-      };
-    }
-
     const dayStart = new Date(parsedDate);
     dayStart.setHours(0, 0, 0, 0);
 
     const dayEnd = new Date(parsedDate);
     dayEnd.setHours(23, 59, 59, 999);
+
+    const normalizedShopType = String(shopDetails?.shop_type ?? "")
+      .trim()
+      .toLowerCase();
+    const isDailyOnlyShop = DAILY_ONLY_SHOP_TYPES.includes(
+      normalizedShopType as (typeof DAILY_ONLY_SHOP_TYPES)[number]
+    );
+
+    let totalRevenue = 0;
+    let totalBills = 0;
+
+    if (isDailyOnlyShop) {
+      const dailyRecord = await prisma.dailyTransactions.findFirst({
+        where: {
+          shopId: shopDetails.shop_id,
+          date: {
+            gte: dayStart,
+            lte: dayEnd
+          }
+        }
+      });
+
+      totalRevenue = Number(dailyRecord?.totalTransactionAmount ?? 0);
+      totalBills = Number(dailyRecord?.totalTransactionCount ?? 0);
+    } else {
+      const dailyAggregate = await prisma.transaction.aggregate({
+        where: {
+          shopId: shopDetails.shop_id,
+          createdAt: {
+            gte: dayStart,
+            lte: dayEnd
+          }
+        },
+        _sum: {
+          totalAmount: true
+        },
+        _count: {
+          id: true
+        }
+      });
+
+      totalRevenue = Number(dailyAggregate._sum.totalAmount ?? 0);
+      totalBills = Number(dailyAggregate._count.id ?? 0);
+    }
 
     const existingDailyBill = await prisma.bills.findFirst({
       where: {
@@ -348,20 +468,12 @@ export const saveCloseShopReport = async (
     });
 
     if (existingDailyBill) {
-      const updated = await prisma.bills.update({
-        where: { id: existingDailyBill.id },
-        data: {
-          salesamount: new Prisma.Decimal(totalRevenue),
-          salesCount: Math.floor(totalBills)
-        }
-      });
-
       return {
         isErr: false,
         statusCode: 200,
         messages: {
-          message: "Daily report updated successfully",
-          data: updated
+          message: "Shop is already closed for this date",
+          data: existingDailyBill
         }
       };
     }

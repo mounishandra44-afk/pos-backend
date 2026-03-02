@@ -47,31 +47,11 @@ exports.loginDataVali = [
     (0, express_validator_1.body)("email")
         .trim()
         .notEmpty().withMessage(ErrorMessages_1.DATAMISSING).bail()
-        .custom((val) => {
-        if (!val.includes("@")) {
-            throw new Error(ErrorMessages_1.EMAIL_MUST_CONTAIN);
-        }
-        if (!validEmail.includes(val.split("@")[1])) {
-            throw new Error(ErrorMessages_1.NOT_VALID_EMAIL);
-        }
-        return true;
-    }),
+        .isEmail().withMessage(ErrorMessages_1.NOT_VALID_EMAIL),
     (0, express_validator_1.body)("password")
         .trim()
         .notEmpty().withMessage(ErrorMessages_1.DATAMISSING).bail()
-        .isLength({ min: 8, max: 50 }).withMessage(ErrorMessages_1.PASSWORD_MUST_BE_IN_RANGE).bail()
-        .custom((val) => {
-        if (!/[!@#$%^&*]/.test(val)) {
-            throw new Error(ErrorMessages_1.PASSWORD_MUST_SPECAIL);
-        }
-        if (!/[0-9]/.test(val)) {
-            throw new Error(ErrorMessages_1.PASSWORD_MUST_NUMBER);
-        }
-        if (!/[a-zA-Z]/.test(val)) {
-            throw new Error(ErrorMessages_1.PASSWORD_MUST_ALPHABET);
-        }
-        return true;
-    })
+        .isLength({ min: 6, max: 50 }).withMessage("Password length must be in the range of 6 and 50")
 ];
 exports.forgetEmailVali = [
     (0, express_validator_1.body)("email")
@@ -182,7 +162,16 @@ exports.productData = [
         .trim()
         .exists({ checkFalsy: true }).withMessage("Price can't be empty")
         .bail()
-        .isFloat({ min: 1, max: 100000 }).withMessage("Product price must be between 1 and 100000")
+        .isFloat({ min: 1, max: 100000 }).withMessage("Product price must be between 1 and 100000"),
+    (0, express_validator_1.body)("quantity")
+        .optional()
+        .isInt({ min: 0 }).withMessage("Quantity must be 0 or more"),
+    (0, express_validator_1.body)("gstApplicable")
+        .optional()
+        .isBoolean().withMessage("gstApplicable must be true or false"),
+    (0, express_validator_1.body)("gstRate")
+        .optional()
+        .isInt({ min: 0, max: 50 }).withMessage("GST rate must be between 0 and 50")
 ];
 exports.validateDateRange = [
     (0, express_validator_1.query)("fromDate")

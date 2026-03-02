@@ -18,6 +18,22 @@ export declare function registerAdmin(reqBody: any): Promise<RegisterAdminResult
 export declare function checkAdminCredentials(loginData: AdminLogin_Data): Promise<{
     accessToken: string;
     refreshToken: string;
+    role: string;
+    shop: {
+        id: string;
+        userName: string;
+        email: string;
+        shop_type: string;
+    };
+} | null>;
+export declare function checkStaffCredentials(loginData: AdminLogin_Data): Promise<{
+    accessToken: string;
+    role: string;
+    staff: {
+        id: string;
+        username: string;
+        email: string;
+    };
     shop: {
         id: string;
         userName: string;

@@ -195,7 +195,19 @@ export let productData = [
     .trim()
     .exists({ checkFalsy: true }).withMessage("Price can't be empty") 
     .bail()
-    .isFloat({ min: 1, max: 100000 }).withMessage("Product price must be between 1 and 100000")
+    .isFloat({ min: 1, max: 100000 }).withMessage("Product price must be between 1 and 100000"),
+
+  body("quantity")
+    .optional()
+    .isInt({ min: 0 }).withMessage("Quantity must be 0 or more"),
+
+  body("gstApplicable")
+    .optional()
+    .isBoolean().withMessage("gstApplicable must be true or false"),
+
+  body("gstRate")
+    .optional()
+    .isInt({ min: 0, max: 50 }).withMessage("GST rate must be between 0 and 50")
 ];
 
 

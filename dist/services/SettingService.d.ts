@@ -1,4 +1,12 @@
-export declare const getAdminDataSer: (shopDetails: any) => Promise<{
+export declare const getAdminDataSer: (shopDetails: any) => Promise<({
+    staff: {
+        email: string;
+        username: string;
+        id: string;
+        createdAt: Date;
+        role: string;
+    }[];
+} & {
     userName: string;
     phone: string;
     email: string;
@@ -12,5 +20,5 @@ export declare const getAdminDataSer: (shopDetails: any) => Promise<{
     welcomeMessage: string;
     createdAt: Date;
     updatedAt: Date;
-} | null | undefined>;
+}) | null | undefined>;
 //# sourceMappingURL=SettingService.d.ts.map

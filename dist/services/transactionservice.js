@@ -3,9 +3,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.saveTransactionSer = void 0;
 const client_1 = require("@prisma/client");
 const prisma_1 = require("../types/prisma");
+const DAILY_ONLY_SHOP_TYPES = [
+    "cafe",
+    "retail",
+    "hybrid",
+    "garment",
+    "salon",
+    "hardware",
+    "bakery",
+    "stationery",
+    "other"
+];
 const saveTransactionSer = async (transactions, shop_Details) => {
     try {
-        if (!Array.isArray(transactions) || transactions.length === 0) {
+        const normalizedTransactions = Array.isArray(transactions)
+            ? transactions
+            : [transactions];
+        if (normalizedTransactions.length === 0) {
             return {
                 isErr: true,
                 statusCode: 400,
@@ -16,14 +30,18 @@ const saveTransactionSer = async (transactions, shop_Details) => {
             /* 1️⃣ Fetch GST from Shop */
             const shop = await tx.shop_Owner.findUnique({
                 where: { id: shop_Details.shop_id },
-                select: { gst_percentage: true }
+                select: { gst_percentage: true, shop_type: true }
             });
             if (!shop) {
                 throw new Error("Shop not found");
             }
             const GST_PERCENT = new client_1.Prisma.Decimal(shop.gst_percentage);
+            const normalizedShopType = String(shop.shop_type ?? "")
+                .trim()
+                .toLowerCase();
+            const shouldStoreOnlyDailyTransactions = DAILY_ONLY_SHOP_TYPES.includes(normalizedShopType);
             const createdTransactions = [];
-            for (const transactionObject of transactions) {
+            for (const transactionObject of normalizedTransactions) {
                 if (!transactionObject.transac_Item?.length) {
                     throw new Error("Transaction items missing");
                 }
@@ -70,6 +88,39 @@ const saveTransactionSer = async (transactions, shop_Details) => {
                 const calculatedTotal = calculatedSubtotal
                     .add(gstAmount)
                     .toDecimalPlaces(2);
+                if (shouldStoreOnlyDailyTransactions) {
+                    const dailyDate = new Date();
+                    dailyDate.setHours(0, 0, 0, 0);
+                    await tx.dailyTransactions.upsert({
+                        where: {
+                            shopId_date: {
+                                shopId: shop_Details.shop_id,
+                                date: dailyDate
+                            }
+                        },
+                        create: {
+                            shopId: shop_Details.shop_id,
+                            date: dailyDate,
+                            totalTransactionCount: 1,
+                            totalTransactionAmount: calculatedTotal
+                        },
+                        update: {
+                            totalTransactionCount: {
+                                increment: 1
+                            },
+                            totalTransactionAmount: {
+                                increment: calculatedTotal
+                            }
+                        }
+                    });
+                    createdTransactions.push({
+                        mode: "daily-only",
+                        date: dailyDate,
+                        totalAmount: Number(calculatedTotal),
+                        totalTransactions: 1
+                    });
+                    continue;
+                }
                 /* 6️⃣ Create Transaction */
                 const createdTransaction = await tx.transaction.create({
                     data: {

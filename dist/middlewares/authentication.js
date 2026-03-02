@@ -17,8 +17,23 @@ const authenticate = async (req, res, next) => {
     }
     try {
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_ACCESS_SECRET);
+        let resolvedShopId = decoded.id;
+        if (decoded.role === "STAFF" && decoded.userType === "staff") {
+            const byShopId = await prisma_1.prisma.shop_Owner.findUnique({
+                where: { id: decoded.id }
+            });
+            if (!byShopId) {
+                const staffRecord = await prisma_1.prisma.staff.findUnique({
+                    where: { id: decoded.id },
+                    select: { shopId: true }
+                });
+                if (staffRecord) {
+                    resolvedShopId = staffRecord.shopId;
+                }
+            }
+        }
         const shop = await prisma_1.prisma.shop_Owner.findUnique({
-            where: { id: decoded.id }
+            where: { id: resolvedShopId }
         });
         if (!shop) {
             return res.status(404).json({ message: "Shop not found" });
@@ -29,6 +44,15 @@ const authenticate = async (req, res, next) => {
             shop_email: shop.email,
             shop_type: shop.shop_type
         };
+        const authDetails = {
+            role: decoded.role === "STAFF" ? "STAFF" : "ADMIN",
+            userType: typeof decoded.userType === "string" ? decoded.userType : "shop_owner",
+            shop_id: shop.id
+        };
+        if (typeof decoded.staffId === "string") {
+            authDetails.staff_id = decoded.staffId;
+        }
+        req.auth_Details = authDetails;
         next();
     }
     catch (err) {

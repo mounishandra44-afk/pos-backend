@@ -7,6 +7,20 @@ const getAdminDataSer = async (shopDetails) => {
         return await prisma_1.prisma.shop_Owner.findUnique({
             where: {
                 id: shopDetails.shop_id
+            },
+            include: {
+                staff: {
+                    select: {
+                        id: true,
+                        username: true,
+                        email: true,
+                        role: true,
+                        createdAt: true
+                    },
+                    orderBy: {
+                        createdAt: "desc"
+                    }
+                }
             }
         });
     }

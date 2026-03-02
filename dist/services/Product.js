@@ -16,13 +16,16 @@ const findProductInShop = async (shopDetails, name, category) => {
 };
 exports.findProductInShop = findProductInShop;
 async function saveProductToShop(productDetails, shopDetails) {
-    const { name, category, shortcutKey, price } = productDetails;
+    const { name, category, shortcutKey, price, quantity, gstApplicable, gstRate } = productDetails;
     return await prisma_1.prisma.product.create({
         data: {
             product_Name: name.trim().toLowerCase(),
-            product_Price: price,
+            product_Price: Number(price),
             category: category.trim().toLowerCase(),
             shortCut_key: shortcutKey || "",
+            quantity: Number.isFinite(Number(quantity)) ? Number(quantity) : 0,
+            gst_enabled: typeof gstApplicable === "boolean" ? gstApplicable : false,
+            gst_percentage: Number.isFinite(Number(gstRate)) ? Number(gstRate) : 0,
             shop_id: shopDetails.shop_id,
         },
     });
@@ -37,6 +40,9 @@ async function saveDataFromTheFile(fileData, shop_data) {
                     category: item.productCategory.trim().toLowerCase(),
                     shortCut_key: item.productShortCut || "",
                     product_Price: item.price,
+                    quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
+                    gst_enabled: typeof item.gstApplicable === "boolean" ? item.gstApplicable : false,
+                    gst_percentage: Number.isFinite(Number(item.gstRate)) ? Number(item.gstRate) : 0,
                     shop_id: shop_data.shop_id,
                 },
             });
@@ -73,7 +79,7 @@ async function getAllTheProductDetailsForParticularShop(shopDetails) {
 }
 const updateProductData = async (reqBody, shop_Details) => {
     try {
-        const { id, name, category, productShortCut, price } = reqBody;
+        const { id, name, category, productShortCut, price, quantity, gstApplicable, gstRate } = reqBody;
         // console.log(reqBody)
         if (!id) {
             return {
@@ -83,19 +89,21 @@ const updateProductData = async (reqBody, shop_Details) => {
                 data: null,
             };
         }
+        const updateData = {
+            ...(name !== undefined ? { product_Name: name.trim().toLowerCase() } : {}),
+            ...(category !== undefined ? { category: category.trim().toLowerCase() } : {}),
+            ...(productShortCut !== undefined ? { shortCut_key: productShortCut.trim() } : {}),
+            ...(price !== undefined ? { product_Price: Number(price) } : {}),
+            ...(quantity !== undefined ? { quantity: Number(quantity) } : {}),
+            ...(gstApplicable !== undefined ? { gst_enabled: Boolean(gstApplicable) } : {}),
+            ...(gstRate !== undefined ? { gst_percentage: Number(gstRate) } : {})
+        };
         const updateResult = await prisma_1.prisma.product.updateMany({
             where: {
                 id: id,
                 shop_id: shop_Details.shop_id,
             },
-            data: {
-                product_Name: name?.trim().toLowerCase(),
-                category: category?.trim().toLowerCase(),
-                shortCut_key: productShortCut !== undefined
-                    ? productShortCut.trim()
-                    : undefined,
-                product_Price: price,
-            },
+            data: updateData,
         });
         if (updateResult.count === 0) {
             return {

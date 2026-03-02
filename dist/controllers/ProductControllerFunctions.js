@@ -8,6 +8,21 @@ const Product_1 = require("../services/Product");
 const ErrorMessages_1 = require("../constData/ErrorMessages");
 const fs_1 = __importDefault(require("fs"));
 const fast_csv_1 = require("fast-csv");
+const mapProductForFrontend = (product) => {
+    if (!product)
+        return product;
+    const gstEnabled = Boolean(product.gst_enabled);
+    const gstRate = Number(product.gst_percentage ?? 0);
+    return {
+        ...product,
+        productShortCut: product.shortCut_key ?? "",
+        price: Number(product.product_Price ?? 0),
+        gstApplicable: gstEnabled,
+        gstRate,
+        gst: gstEnabled ? gstRate : 0
+    };
+};
+const mapProductsForFrontend = (products) => products.map((product) => mapProductForFrontend(product));
 const saveProduct = async (req, res) => {
     try {
         const { name, category } = req.body;
@@ -29,7 +44,7 @@ const saveProduct = async (req, res) => {
         return res.status(201).json({
             isError: false,
             message: "Product saved successfully",
-            data,
+            data: mapProductForFrontend(data),
         });
     }
     catch (error) {
@@ -68,6 +83,12 @@ const csvData = async (req, res) => {
         const category = row.category?.trim();
         const shortCut = row.shortCut_key?.trim();
         const price = Number(row.product_Price);
+        const quantity = row.quantity !== undefined && row.quantity !== "" ? Number(row.quantity) : 0;
+        const gstRate = row.gst_percentage !== undefined && row.gst_percentage !== "" ? Number(row.gst_percentage) : 0;
+        const gstApplicableRaw = row.gst_enabled;
+        const gstApplicable = typeof gstApplicableRaw === "string"
+            ? gstApplicableRaw.trim().toLowerCase() === "true"
+            : Boolean(gstApplicableRaw);
         let rowHasError = false;
         if (!name) {
             errors.push(`product_Name is required`);
@@ -81,12 +102,23 @@ const csvData = async (req, res) => {
             errors.push(`product_Price must be a number greater than 0`);
             rowHasError = true;
         }
+        if (isNaN(quantity) || quantity < 0) {
+            errors.push(`quantity must be a number greater than or equal to 0`);
+            rowHasError = true;
+        }
+        if (isNaN(gstRate) || gstRate < 0 || gstRate > 50) {
+            errors.push(`gst_percentage must be between 0 and 50`);
+            rowHasError = true;
+        }
         if (!rowHasError) {
             productData.push({
                 productName: name,
                 productCategory: category,
                 productShortCut: shortCut || "",
                 price,
+                quantity,
+                gstApplicable,
+                gstRate,
             });
         }
     });
@@ -127,7 +159,7 @@ const csvData = async (req, res) => {
         return res.status(result.statusCode).json({
             isError: result.isErr,
             message: result.messages,
-            data: result.data || null,
+            data: result.data ? mapProductsForFrontend(result.data) : null,
         });
     });
 };
@@ -139,7 +171,8 @@ const getAllTheProductDetails = async (req, res) => {
         //  console.log(products.messages)
         return res.status(products.statusCode).json({
             isError: false,
-            message: products.messages
+            message: products.messages,
+            data: mapProductsForFrontend(products.messages)
         });
     }
     catch (error) {
@@ -157,7 +190,7 @@ const updateProduct = async (req, res) => {
         return res.status(result.statusCode).json({
             isError: result.isError,
             message: result.message,
-            data: result.data,
+            data: mapProductForFrontend(result.data),
         });
     }
     catch (error) {

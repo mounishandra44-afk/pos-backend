@@ -1,8 +1,15 @@
+import { Prisma } from "@prisma/client";
+type CloseShopPayload = {
+    date?: string;
+    totalRevenue?: number;
+    totalBills?: number;
+    shopId?: string;
+};
 export declare const getDailyReportData: (queryDates: any, shopDetails: any) => Promise<{
     isErr: boolean;
     statusCode: number;
     messages: {
-        total: number | import("@prisma/client/runtime/library").Decimal;
+        total: number | Prisma.Decimal;
         count: number;
     };
 } | {
@@ -75,4 +82,23 @@ export declare const getLastYearData: (shopDetails: any) => Promise<{
     statusCode: number;
     messages: string;
 }>;
+export declare const saveCloseShopReport: (payload: CloseShopPayload, shopDetails: any) => Promise<{
+    isErr: boolean;
+    statusCode: number;
+    messages: string;
+} | {
+    isErr: boolean;
+    statusCode: number;
+    messages: {
+        message: string;
+        data: {
+            id: string;
+            createdAt: Date;
+            shopId: string;
+            salesamount: Prisma.Decimal;
+            salesCount: number;
+        };
+    };
+}>;
+export {};
 //# sourceMappingURL=ReportsService.d.ts.map

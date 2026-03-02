@@ -8,4 +8,5 @@ export declare const overviewData: (req: Request, res: Response) => Promise<Resp
 export declare const dashboardData: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
 export declare const last30DaysController: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
 export declare const last1YearController: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+export declare const closeShopController: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
 //# sourceMappingURL=ReportController.d.ts.map

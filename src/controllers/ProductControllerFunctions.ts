@@ -5,6 +5,25 @@ import { INTERNAL_SERVER_ERROR } from "../constData/ErrorMessages";
 
 import fs from "fs";
 import { parse } from "fast-csv";
+
+const mapProductForFrontend = (product: any) => {
+  if (!product) return product;
+
+  const gstEnabled = Boolean(product.gst_enabled);
+  const gstRate = Number(product.gst_percentage ?? 0);
+
+  return {
+    ...product,
+    productShortCut: product.shortCut_key ?? "",
+    price: Number(product.product_Price ?? 0),
+    gstApplicable: gstEnabled,
+    gstRate,
+    gst: gstEnabled ? gstRate : 0
+  };
+};
+
+const mapProductsForFrontend = (products: any[]) =>
+  products.map((product) => mapProductForFrontend(product));
 export const saveProduct = async (req: Request<{}, {}, Product>, res: Response) => {
     try {
         const { name, category } = req.body;
@@ -31,7 +50,7 @@ if (!data) {
 return res.status(201).json({
   isError: false,
   message: "Product saved successfully",
-  data,
+  data: mapProductForFrontend(data),
 });
 
 
@@ -81,6 +100,13 @@ export const csvData = async (req: Request, res: Response) => {
     const category = row.category?.trim();
     const shortCut = row.shortCut_key?.trim();
     const price = Number(row.product_Price);
+    const quantity = row.quantity !== undefined && row.quantity !== "" ? Number(row.quantity) : 0;
+    const gstRate = row.gst_percentage !== undefined && row.gst_percentage !== "" ? Number(row.gst_percentage) : 0;
+    const gstApplicableRaw = row.gst_enabled;
+    const gstApplicable =
+      typeof gstApplicableRaw === "string"
+        ? gstApplicableRaw.trim().toLowerCase() === "true"
+        : Boolean(gstApplicableRaw);
 
     let rowHasError = false;
 
@@ -99,12 +125,25 @@ export const csvData = async (req: Request, res: Response) => {
       rowHasError = true;
     }
 
+    if (isNaN(quantity) || quantity < 0) {
+      errors.push(`quantity must be a number greater than or equal to 0`);
+      rowHasError = true;
+    }
+
+    if (isNaN(gstRate) || gstRate < 0 || gstRate > 50) {
+      errors.push(`gst_percentage must be between 0 and 50`);
+      rowHasError = true;
+    }
+
     if (!rowHasError) {
       productData.push({
         productName: name,
         productCategory: category,
         productShortCut: shortCut || "",
         price,
+        quantity,
+        gstApplicable,
+        gstRate,
       });
     }
   });
@@ -162,7 +201,7 @@ export const csvData = async (req: Request, res: Response) => {
     return res.status(result.statusCode).json({
   isError: result.isErr,
   message: result.messages,
-  data: result.data || null,
+      data: result.data ? mapProductsForFrontend(result.data) : null,
 });
 
   });
@@ -178,7 +217,7 @@ export const getAllTheProductDetails=async (req:Request,res:Response) => {
         return  res.status(products.statusCode).json({
     isError: false,
     message: products.messages,
-    data: products.messages
+      data: mapProductsForFrontend(products.messages as any[])
   })
     } catch (error) {
         return res.status(500).json({
@@ -200,7 +239,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     return res.status(result.statusCode).json({
       isError: result.isError,
       message: result.message,
-      data: result.data,
+      data: mapProductForFrontend(result.data),
     });
   } catch (error) {
     return res.status(500).json({

@@ -11,6 +11,7 @@ const authentication_1 = require("../middlewares/authentication");
 const RateLimiting_1 = require("../middlewares/RateLimiting");
 const prisma_1 = require("../types/prisma");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const authorization_1 = require("../middlewares/authorization");
 const router = express_1.default.Router();
 router.get('/health', (req, res) => {
     res.status(200).json({ message: "Backend is responding" });
@@ -52,7 +53,10 @@ router.post("/adminRegister", DataValidation_1.allData, DataValidation_1.validat
 });
 router.post("/login", RateLimiting_1.loginLimiter, DataValidation_1.loginDataVali, DataValidation_1.validateAdminData, async (req, res) => {
     try {
-        const result = await (0, AdminService_1.checkAdminCredentials)(req.body);
+        let result = await (0, AdminService_1.checkAdminCredentials)(req.body);
+        if (!result) {
+            result = await (0, AdminService_1.checkStaffCredentials)(req.body);
+        }
         if (!result) {
             return res.status(401).json({
                 isError: true,
@@ -139,7 +143,7 @@ router.put("/updateTheNewPassword", DataValidation_1.validateemailAndPass, DataV
         });
     }
 });
-router.put("/updateUser", authentication_1.authenticate, DataValidation_1.updatedData, DataValidation_1.validateAdminData, async (req, res) => {
+router.put("/updateUser", authentication_1.authenticate, authorization_1.requireAdmin, DataValidation_1.updatedData, DataValidation_1.validateAdminData, async (req, res) => {
     try {
         const updatedAdmin = await (0, AdminService_1.updateAdminData)(req.body, req.shop_Details);
         if (!updatedAdmin) {
@@ -181,9 +185,34 @@ router.post("/logout", authentication_1.authenticate, async (req, res) => {
         });
     }
 });
-router.post("/addStaff", authentication_1.authenticate, DataValidation_1.staffDataVali, DataValidation_1.validateAdminData, async (req, res) => {
+router.post("/addStaff", authentication_1.authenticate, authorization_1.requireAdmin, async (req, res) => {
     try {
-        const result = await (0, AdminService_1.addStaffService)(req.body, req.shop_Details);
+        const username = String(req.body?.username ?? req.body?.userName ?? "").trim();
+        const email = String(req.body?.email ?? "").trim().toLowerCase();
+        const password = String(req.body?.password ?? "");
+        if (!username || username.length < 3 || username.length > 50) {
+            return res.status(400).json({
+                isError: true,
+                message: "Username must be between 3 and 50 characters",
+                data: {}
+            });
+        }
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+            return res.status(400).json({
+                isError: true,
+                message: "Email is not valid",
+                data: {}
+            });
+        }
+        if (!password || password.length < 6 || password.length > 50) {
+            return res.status(400).json({
+                isError: true,
+                message: "Password length must be in the range of 6 and 50",
+                data: {}
+            });
+        }
+        const result = await (0, AdminService_1.addStaffService)({ username, email, password }, req.shop_Details);
         if (!result.success) {
             if (result.reason === "EMAIL_EXISTS") {
                 return res.status(409).json({
@@ -212,7 +241,7 @@ router.post("/addStaff", authentication_1.authenticate, DataValidation_1.staffDa
         });
     }
 });
-router.get("/staff", authentication_1.authenticate, async (req, res) => {
+router.get("/staff", authentication_1.authenticate, authorization_1.requireAdmin, async (req, res) => {
     try {
         const staffs = await (0, AdminService_1.getStaffByShopService)(req.shop_Details);
         return res.status(200).json({
@@ -229,7 +258,7 @@ router.get("/staff", authentication_1.authenticate, async (req, res) => {
         });
     }
 });
-router.get("/getStaff", authentication_1.authenticate, async (req, res) => {
+router.get("/getStaff", authentication_1.authenticate, authorization_1.requireAdmin, async (req, res) => {
     try {
         const staffs = await (0, AdminService_1.getStaffByShopService)(req.shop_Details);
         return res.status(200).json({

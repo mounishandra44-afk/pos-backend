@@ -14,7 +14,7 @@ const SettingsRoute_1 = __importDefault(require("./controllers/SettingsRoute"));
 // "http://localhost:9002"
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-    origin: ["http://localhost:9002", "http://192.168.0.23:9002", "https://quickledger-bill.netlify.app", "https://quick-ledger.vercel.app"],
+    origin: ["http://localhost:9002", "http://192.168.0.18:9002", "https://quickledger-bill.netlify.app", "https://quick-ledger.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));

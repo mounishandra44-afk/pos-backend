@@ -91,6 +91,7 @@ model Shop_Owner {
   updatedAt    DateTime @updatedAt
   subscriptionDetails SubscriptionDetails[]
   bill bills[]
+  dailyTransactions DailyTransactions[]
 }
 
 model Product {
@@ -99,6 +100,9 @@ model Product {
   product_Price    Decimal  @db.Decimal(10, 2)
   category         String
   shortCut_key     String
+  quantity         Int      @default(0)
+  gst_enabled      Boolean  @default(false)
+  gst_percentage   Int      @default(0)   
 
   transactionItem  TransactionItem[]
 
@@ -171,6 +175,19 @@ model bills{
    createdAt DateTime @default(now())
 
 }
+
+model DailyTransactions {
+  id                     String   @id @default(uuid()) @db.Uuid
+  date                   DateTime @db.Date
+  totalTransactionCount  Int      @default(0)
+  totalTransactionAmount Decimal  @db.Decimal(10,2) @default(0.00)
+
+  shop      Shop_Owner @relation(fields: [shopId], references: [id])
+  shopId    String     @db.Uuid
+
+  @@unique([shopId, date])
+}
+
 
 // model User{
 //   id Int @id @default(autoincrement())

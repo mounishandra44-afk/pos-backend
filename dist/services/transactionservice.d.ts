@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 type TransactionItemDTO = {
     productId: string;
     prod_quan: number;
@@ -13,7 +12,7 @@ export type CreateTransactionDTO = {
     paymentMethod: string;
     transac_Item: TransactionItemDTO[];
 };
-export declare const saveTransactionSer: (transactions: CreateTransactionDTO[], shop_Details: {
+export declare const saveTransactionSer: (transactions: CreateTransactionDTO[] | CreateTransactionDTO, shop_Details: {
     shop_id: string;
 }) => Promise<{
     isErr: boolean;
@@ -22,19 +21,7 @@ export declare const saveTransactionSer: (transactions: CreateTransactionDTO[], 
 } | {
     isErr: boolean;
     statusCode: number;
-    messages: {
-        id: string;
-        createdAt: Date;
-        shopId: string;
-        customerName: string | null;
-        customerPhone: string | null;
-        warranty: string | null;
-        subtotal: Prisma.Decimal;
-        gstAmount: Prisma.Decimal | null;
-        discountAmount: Prisma.Decimal;
-        totalAmount: Prisma.Decimal;
-        paymentMethod: string;
-    }[];
+    messages: any[];
 }>;
 export {};
 //# sourceMappingURL=transactionservice.d.ts.map
