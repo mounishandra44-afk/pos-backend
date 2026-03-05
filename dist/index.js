@@ -11,14 +11,16 @@ const ReportRoute_1 = __importDefault(require("./controllers/ReportRoute"));
 const cors_1 = __importDefault(require("cors"));
 require("./cron/checkingSubscriptionStatus.cron");
 const SettingsRoute_1 = __importDefault(require("./controllers/SettingsRoute"));
+const path_1 = __importDefault(require("path"));
 // "http://localhost:9002"
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-    origin: ["http://localhost:9002", "http://192.168.0.18:9002", "https://quickledger-bill.netlify.app", "https://quick-ledger.vercel.app"],
+    origin: ["http://localhost:9002", "http://192.168.0.16:9002", "https://fasttrackbill.netlify.app", "https://quick-ledger.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
-app.use(express_1.default.json());
+app.use(express_1.default.json({ limit: "5mb" }));
+app.use("/paymentqr", express_1.default.static(path_1.default.resolve(process.cwd(), "paymentqr")));
 app.use("/user", LoginRoute_1.default);
 app.use("/product", ProductRoute_1.default);
 app.use("/transaction", transationRoute_1.default);

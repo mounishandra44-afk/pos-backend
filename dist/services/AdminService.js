@@ -163,16 +163,50 @@ async function saveThePassword(params) {
 }
 async function updateAdminData(reqBody, shopDetails) {
     try {
+        const parseBoolean = (value) => {
+            if (typeof value === "boolean")
+                return value;
+            if (typeof value === "string") {
+                const normalized = value.trim().toLowerCase();
+                if (normalized === "true")
+                    return true;
+                if (normalized === "false")
+                    return false;
+            }
+            return undefined;
+        };
+        const parseInteger = (value) => {
+            if (typeof value === "number" && Number.isInteger(value))
+                return value;
+            if (typeof value === "string") {
+                const parsed = Number(value);
+                if (Number.isInteger(parsed))
+                    return parsed;
+            }
+            return undefined;
+        };
+        const gstEnabled = parseBoolean(reqBody.gst_enabled ?? reqBody.enableGst);
+        const gstPercentage = parseInteger(reqBody.gst_percentage ?? reqBody.gstRate);
+        const email = reqBody.email;
+        const phone = reqBody.phone ?? reqBody.mobileNumber;
+        const shopName = reqBody.shop_name ?? reqBody.shopName;
+        const shopType = reqBody.shop_type ?? reqBody.shopType;
+        const welcomeMessage = reqBody.vist_message ?? reqBody.welcomeMessage;
         const data = await prisma_1.prisma.shop_Owner.update({
             where: { id: shopDetails.shop_id },
             data: {
-                email: reqBody.email,
-                phone: reqBody.phone,
-                shop_name: reqBody.shop_name,
-                shop_type: reqBody.shop_type,
-                welcomeMessage: reqBody.vist_message,
-                gst_enabled: reqBody.gst_enabled,
-                gst_percentage: reqBody.gst_percentage
+                ...(email !== undefined ? { email } : {}),
+                ...(phone !== undefined ? { phone } : {}),
+                ...(shopName !== undefined ? { shop_name: shopName } : {}),
+                ...(shopType !== undefined ? { shop_type: shopType } : {}),
+                ...(welcomeMessage !== undefined ? { welcomeMessage } : {}),
+                ...(gstEnabled !== undefined ? { gst_enabled: gstEnabled } : {}),
+                ...(gstPercentage !== undefined ? { gst_percentage: gstPercentage } : {}),
+                ...(reqBody.qrImageUrl === null
+                    ? { Qr_image: null }
+                    : reqBody.qrImageUrl
+                        ? { Qr_image: reqBody.qrImageUrl }
+                        : {})
             }
         });
         return data;

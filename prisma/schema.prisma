@@ -92,6 +92,7 @@ model Shop_Owner {
   subscriptionDetails SubscriptionDetails[]
   bill bills[]
   dailyTransactions DailyTransactions[]
+  Qr_image   String? 
 }
 
 model Product {
