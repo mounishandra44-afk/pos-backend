@@ -9,6 +9,16 @@ import { AdminLogin_Data } from "../types/AdminData";
 import { sendResetEmail } from "../utils/sendEmail";
 dotenv.config();
 
+type StaffPayload = {
+  username: string;
+  email: string;
+  password: string;
+};
+
+type ShopContext = {
+  shop_id: string;
+};
+
 type RegisterAdminResult =
   | { success: true; data: any }
   | { success: false; reason: "EMAIL_EXISTS Or PHONE_EXISTS" | "SERVER_ERROR" };
@@ -44,7 +54,7 @@ export async function registerAdmin(
       }
     });
 
-    console.log(adminData);
+    // console.log(adminData);
     return { success: true, data: adminData };
 
   } catch (error) {
@@ -70,7 +80,7 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
 
    
     const accessToken = jwt.sign(
-      { id: user.id },
+      { id: user.id, role: "ADMIN", userType: "shop_owner" },
       process.env.JWT_ACCESS_SECRET!,
       { expiresIn: "1d" }
     );
@@ -90,6 +100,7 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
     return {
       accessToken,
       refreshToken,
+      role: "ADMIN",
       shop: {
         id: user.id,
         userName: user.userName,
@@ -99,6 +110,55 @@ export async function checkAdminCredentials(loginData: AdminLogin_Data) {
     };
 
   } catch (error) {
+    return null;
+  }
+}
+
+export async function checkStaffCredentials(loginData: AdminLogin_Data) {
+  try {
+    const staffUser = await prisma.staff.findUnique({
+      where: { email: loginData.email },
+      include: {
+        shop: true
+      }
+    });
+
+    if (!staffUser) return null;
+
+    const isMatched = await bcrypt.compare(
+      loginData.password,
+      staffUser.password
+    );
+
+    if (!isMatched) return null;
+
+    const accessToken = jwt.sign(
+      {
+        id: staffUser.shopId,
+        role: "STAFF",
+        userType: "staff",
+        staffId: staffUser.id
+      },
+      process.env.JWT_ACCESS_SECRET!,
+      { expiresIn: "1d" }
+    );
+
+    return {
+      accessToken,
+      role: "STAFF",
+      staff: {
+        id: staffUser.id,
+        username: staffUser.username,
+        email: staffUser.email
+      },
+      shop: {
+        id: staffUser.shop.id,
+        userName: staffUser.shop.userName,
+        email: staffUser.shop.email,
+        shop_type: staffUser.shop.shop_type
+      }
+    };
+  } catch {
     return null;
   }
 }
@@ -171,16 +231,49 @@ export async function updateAdminData(
   shopDetails: any
 ): Promise<any> {
   try {
+    const parseBoolean = (value: unknown): boolean | undefined => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === "true") return true;
+        if (normalized === "false") return false;
+      }
+      return undefined;
+    };
+
+    const parseInteger = (value: unknown): number | undefined => {
+      if (typeof value === "number" && Number.isInteger(value)) return value;
+      if (typeof value === "string") {
+        const parsed = Number(value);
+        if (Number.isInteger(parsed)) return parsed;
+      }
+      return undefined;
+    };
+
+    const gstEnabled = parseBoolean(reqBody.gst_enabled ?? reqBody.enableGst);
+    const gstPercentage = parseInteger(reqBody.gst_percentage ?? reqBody.gstRate);
+
+    const email = reqBody.email;
+    const phone = reqBody.phone ?? reqBody.mobileNumber;
+    const shopName = reqBody.shop_name ?? reqBody.shopName;
+    const shopType = reqBody.shop_type ?? reqBody.shopType;
+    const welcomeMessage = reqBody.vist_message ?? reqBody.welcomeMessage;
+
     const data = await prisma.shop_Owner.update({
       where: { id: shopDetails.shop_id },
       data: {
-        email: reqBody.email,
-        phone: reqBody.phone,
-        shop_name: reqBody.shop_name,
-        shop_type: reqBody.shop_type,
-        welcomeMessage: reqBody.vist_message,
-        gst_enabled: reqBody.gst_enabled,
-        gst_percentage: reqBody.gst_percentage
+        ...(email !== undefined ? { email } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+        ...(shopName !== undefined ? { shop_name: shopName } : {}),
+        ...(shopType !== undefined ? { shop_type: shopType } : {}),
+        ...(welcomeMessage !== undefined ? { welcomeMessage } : {}),
+        ...(gstEnabled !== undefined ? { gst_enabled: gstEnabled } : {}),
+        ...(gstPercentage !== undefined ? { gst_percentage: gstPercentage } : {}),
+        ...(reqBody.qrImageUrl === null
+          ? { Qr_image: null }
+          : reqBody.qrImageUrl
+            ? { Qr_image: reqBody.qrImageUrl }
+            : {})
       }
     });
 
@@ -190,4 +283,70 @@ export async function updateAdminData(
     // console.error(error);
     throw new Error(INTERNAL_SERVER_ERROR); 
   }
+}
+
+type AddStaffResult =
+  | {
+      success: true;
+      data: {
+        id: string;
+        username: string;
+        email: string;
+        role: string;
+        createdAt: Date;
+      };
+    }
+  | { success: false; reason: "EMAIL_EXISTS" | "SERVER_ERROR" };
+
+export async function addStaffService(
+  payload: StaffPayload,
+  shopDetails: ShopContext
+): Promise<AddStaffResult> {
+  try {
+    const existingStaff = await prisma.staff.findUnique({
+      where: { email: payload.email }
+    });
+
+    if (existingStaff) {
+      return { success: false, reason: "EMAIL_EXISTS" };
+    }
+
+    const hashedPassword = await hashingPassword(payload.password);
+
+    const createdStaff = await prisma.staff.create({
+      data: {
+        username: payload.username,
+        email: payload.email,
+        password: hashedPassword,
+        shopId: shopDetails.shop_id
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    return { success: true, data: createdStaff };
+  } catch {
+    return { success: false, reason: "SERVER_ERROR" };
+  }
+}
+
+export async function getStaffByShopService(shopDetails: ShopContext) {
+  return prisma.staff.findMany({
+    where: { shopId: shopDetails.shop_id },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      role: true,
+      createdAt: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
 }

@@ -1,5 +1,5 @@
 import { Request,Response } from "express";
-import { getDailyReportData, getDashboardData, getLast30DaysData, getLastYearData, getOverViewData } from "../services/ReportsService";
+import { getDailyReportData, getDashboardData, getLast30DaysData, getLastYearData, getOverViewData, saveCloseShopReport } from "../services/ReportsService";
 import { Dates } from "../types/FromDateToDate";
 
 export const dayilyData = async (req: Request, res: Response) => {
@@ -85,6 +85,37 @@ export const last1YearController = async (req: Request, res: Response) => {
     return res.status(500).json({
       isError: true,
       message: "Unexpected server error"
+    });
+  }
+};
+
+export const closeShopController = async (req: Request, res: Response) => {
+  try {
+    const result = await saveCloseShopReport(req.body, req.shop_Details);
+
+    if (result.isErr) {
+      return res.status(result.statusCode).json({
+        isError: true,
+        message: result.messages,
+        data: {}
+      });
+    }
+
+    const payload = result.messages as {
+      message: string;
+      data: unknown;
+    };
+
+    return res.status(result.statusCode).json({
+      isError: false,
+      message: payload.message,
+      data: payload.data
+    });
+  } catch {
+    return res.status(500).json({
+      isError: true,
+      message: "Unexpected server error",
+      data: {}
     });
   }
 };

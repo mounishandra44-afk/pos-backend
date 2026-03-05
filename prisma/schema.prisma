@@ -82,6 +82,7 @@ model Shop_Owner {
  refreshToken String? 
   products     Product[]
   transaction  Transaction[]
+  staff       staff[]
 
   gst_enabled  Boolean  @default(false)
   gst_percentage Int @default(0)
@@ -89,6 +90,9 @@ model Shop_Owner {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   subscriptionDetails SubscriptionDetails[]
+  bill bills[]
+  dailyTransactions DailyTransactions[]
+  Qr_image   String? 
 }
 
 model Product {
@@ -97,6 +101,9 @@ model Product {
   product_Price    Decimal  @db.Decimal(10, 2)
   category         String
   shortCut_key     String
+  quantity         Int      @default(0)
+  gst_enabled      Boolean  @default(false)
+  gst_percentage   Int      @default(0)   
 
   transactionItem  TransactionItem[]
 
@@ -147,6 +154,40 @@ model SubscriptionDetails{
   createdAt DateTime @default(now())
 }
 
+model staff{
+  id              String   @id @default(uuid()) @db.Uuid
+  username        String
+  email           String @unique
+  password      String
+  role     String @default("STAFF")
+  createdAt DateTime @default(now())
+  shop             Shop_Owner @relation(fields: [shopId], references: [id])
+  shopId           String  @db.Uuid
+
+}
+
+model bills{
+   id           String   @id @default(uuid()) @db.Uuid
+  salesamount   Decimal    @db.Decimal(10,2)
+  salesCount   Int 
+
+  shop             Shop_Owner @relation(fields: [shopId], references: [id])
+  shopId           String  @db.Uuid 
+   createdAt DateTime @default(now())
+
+}
+
+model DailyTransactions {
+  id                     String   @id @default(uuid()) @db.Uuid
+  date                   DateTime @db.Date
+  totalTransactionCount  Int      @default(0)
+  totalTransactionAmount Decimal  @db.Decimal(10,2) @default(0.00)
+
+  shop      Shop_Owner @relation(fields: [shopId], references: [id])
+  shopId    String     @db.Uuid
+
+  @@unique([shopId, date])
+}
 
 
 // model User{
